@@ -1,15 +1,16 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <fstream>
+#include <vector>
+#include <cstdlib>
+#include <cassert>
 
-void* xmalloc(size_t bytes, const char* mes) {
-	void* ptr = malloc(bytes);
-	if (!ptr) {
-		printf("%s xmalloc failed", mes);
-		exit(1);
-	}
-	return ptr;
-}
+#include "lexer.cpp"
+#include "common.cpp"
+
+
+
+
 
 char* read_file(const char* path) {
 	size_t path_len = strlen(path);
@@ -38,7 +39,8 @@ char* read_file(const char* path) {
 bool compile_py_file(const char* path){
 	const char* str = read_file(path);
 	if (!str) return false;
-	printf("%s\n", str);
+	
+	init_stream(str);
 }
 
 int main(int argc, char* argv) {
