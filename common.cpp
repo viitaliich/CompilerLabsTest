@@ -1,6 +1,15 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define PULL_BLOCK_SIZE 1024
 
+void fatal(const char* message, ...) {
+	va_list args;
+	va_start(args, message);
+	vprintf(message, args);
+	printf("\n");
+	va_end(args);
+	exit(1);
+}
+
 void* xmalloc(size_t bytes, const char* mes) {
 	void* ptr = malloc(bytes);
 	if (!ptr) {
@@ -19,14 +28,14 @@ typedef struct Pull {
 } Pull;
 
 void pull_append(Pull* pull, size_t min_size) {
-	size_t size = std::max_align_t(MAX(PULL_BLOCK_SIZE, min_size));
+	size_t size = MAX(PULL_BLOCK_SIZE, min_size);
 	pull->ptr = (char*)xmalloc(size, "can't append to memory pull");
 	pull->end = pull->ptr + size;
 	pull->blocks.push_back(pull->ptr);
 }
 
 void* pull_alloc(Pull* pull, size_t min_size) {
-	if (min_size > (size_t)(pull->end - pull->ptr)) {
+	if (pull == nullptr || min_size >= (size_t)(pull->end - pull->ptr)) {
 		pull_append(pull, min_size);
 	}
 	void* ptr = pull->ptr;
@@ -42,16 +51,16 @@ typedef struct InterStr {
 typedef std::vector<InterStr> Interns;
 Interns interns;
 
-Pull* str_pull;		// Pull str_pull
+Pull str_pull;		
 
 const char* str_intern_range(const char* start, const char* end) {
 	size_t len = end - start;
-	for (size_t i = 0; i < interns.size; i++) {
+	for (size_t i = 0; i < interns.size(); i++) {
 		if (interns[i].len == len && strcmp(interns[i].str, start) == 0) {
 			return interns[i].str;
 		}
 	}
-	char* str = (char*)pull_alloc(str_pull, len + 1);	// &str_pull
+	char* str = (char*)pull_alloc(&str_pull, len + 1);	
 	memcpy(str, start, len);
 	str[len] = 0;
 	interns.push_back({ str, len });

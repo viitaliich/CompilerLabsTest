@@ -4,9 +4,11 @@
 #include <vector>
 #include <cstdlib>
 #include <cassert>
+#include <cstdarg>
 
-#include "lexer.cpp"
 #include "common.cpp"
+#include "lexer.cpp"
+
 
 
 
@@ -42,6 +44,11 @@ bool compile_py_file(const char* path){
 	
 	init_stream(str);
 }
+
+enum EX {
+	A, B, C
+};
+
 
 int main(int argc, char* argv) {
 
