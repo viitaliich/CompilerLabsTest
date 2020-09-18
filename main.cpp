@@ -6,12 +6,11 @@
 #include <cassert>
 #include <cstdarg>
 
+#include "ast.h"
+#include "ast.cpp"
 #include "common.cpp"
 #include "lexer.cpp"
-
-
-
-
+#include "parser.cpp"
 
 
 char* read_file(const char* path) {
@@ -43,12 +42,9 @@ bool compile_py_file(const char* path){
 	if (!str) return false;
 	
 	init_stream(str);
+	parse_file();
+	return true;
 }
-
-enum EX {
-	A, B, C
-};
-
 
 int main(int argc, char* argv) {
 

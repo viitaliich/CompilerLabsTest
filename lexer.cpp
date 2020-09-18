@@ -1,6 +1,11 @@
 const char* first_keyword;
 const char* last_keyword;
 
+typedef enum KeywordMod {
+	KEYWORD_DEF,
+	KEYWORD_RET,
+}KeywordMod;
+
 typedef enum TokenKind {
 	TOKEN_SPACE,
 	TOKEN_TAB,
@@ -9,7 +14,7 @@ typedef enum TokenKind {
 	TOKEN_LPAREN,
 	TOKEN_RPAREN,
 	TOKEN_COLON,
-	TOKEN_INT,
+	TOKEN_INT,	// decimal
 	TOKEN_BIN,
 	TOKEN_OCT,
 	TOKEN_HEX,
@@ -21,12 +26,12 @@ typedef enum TokenKind {
 
 typedef struct Token {
 	TokenKind kind;
+	KeywordMod mod;
 	const char* start;
 	const char* end;
 	union {
 		int int_val;
 		double float_val;
-		char ch_val;
 		const char* str_val;
 		const char* name;
 	};
@@ -89,15 +94,66 @@ void scan_str() {
 }
 
 void scan_float() {
-
+	const char* start = stream;
+	while (isdigit(*stream)) {
+		stream++;
+	}
+	if (*stream == '.') {
+		stream++;
+	}
+	while (isdigit(*stream)) {
+		stream++;
+	}
+	token.float_val = strtod(start, NULL);
+	token.kind = TOKEN_FLOAT;
 }
 
 void scan_int() {
-
+	uint8_t base = 10;
+	token.kind = TOKEN_INT;
+	if (*stream == '0') {
+		stream++;
+		if (tolower(*stream) == 'b') {
+			base = 2;
+			token.kind = TOKEN_BIN;
+			stream++;
+		}
+		else if (tolower(*stream) == 'o') {
+			base = 8;
+			token.kind = TOKEN_OCT;
+			stream++;
+		}
+		else if (tolower(*stream) == 'x') {
+			base = 16;
+			token.kind = TOKEN_HEX;
+			stream++;
+		}
+		else {
+			fatal("UNEXPECTED SYMBOL [%c] AT LINE [%d], POSITION [%d]", *stream, src_line, (size_t)(stream - line_start));
+		}
+	}
+	int value = 0;
+	while (isdigit(*stream)) {
+		if (*stream - '0' > base) {
+			fatal("DIGIT [%c] AT LINE [%d], POSITION [%d] OUT OF RANGE FOR BASE [%d].", *stream, src_line, (size_t)(stream - line_start), base);
+		}
+		value = value * base + *stream - '0';
+		stream++;
+	}
+	token.int_val = value;
 }
 
 bool is_keyword(const char* name) {
-	return first_keyword <= name && name <= last_keyword;
+	if (first_keyword <= name && name <= last_keyword){
+		switch (uintptr_t(name) - uintptr_t(first_keyword)) {
+		case KEYWORD_DEF:
+			token.mod = KEYWORD_DEF;
+			break;
+		case KEYWORD_RET:
+			token.mod = KEYWORD_RET;
+			break;
+		}
+	}
 }
 
 void consume_token() {
@@ -177,7 +233,7 @@ repeat:
 		}
 		char sym = *stream;
 		stream = token.start;
-		if (sym = '.') {
+		if (sym == '.') {
 			scan_float();
 		}
 		else {
@@ -201,8 +257,6 @@ repeat:
 typedef std::vector<const char*> Keywords;
 Keywords keywords;
 
-
-
 const char* keyword(const char* str) {
 	const char* keyword = str_intern(str);
 	keywords.push_back(keyword);
@@ -210,7 +264,6 @@ const char* keyword(const char* str) {
 }
 
 void init_keywords() {
-
 	static bool inited;
 	if (inited) return;
 	
@@ -230,3 +283,34 @@ void init_stream(const char* str) {
 	consume_token();
 
 }
+
+bool is_kind(TokenKind kind) {
+	return token.kind == kind;
+}
+
+bool is_mod(KeywordMod mod) {
+	return token.mod == mod;
+}
+
+bool expected_keyword(KeywordMod mod, bool error) {
+	if (is_kind(TOKEN_KEYWORD) && is_mod(mod)) {
+		consume_token();
+		return true;
+	}
+	else {
+		if (error) fatal("***");
+		else return false;
+	}
+}
+
+bool expected_token(TokenKind kind, bool error) {
+	if (is_kind(kind)) {
+		consume_token();
+		return true;
+	}
+	else {
+		if (error) fatal("***");
+		else return false;
+	}
+}
+
