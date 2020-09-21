@@ -25,7 +25,7 @@ typedef struct Pull {
 	char* ptr;
 	char* end;
 	Blocks blocks;
-} Pull;
+}Pull;
 
 void pull_append(Pull* pull, size_t min_size) {
 	size_t size = MAX(PULL_BLOCK_SIZE, min_size);
@@ -46,7 +46,7 @@ void* pull_alloc(Pull* pull, size_t min_size) {
 typedef struct InterStr {
 	const char* str;
 	size_t len;
-};
+}InterStr;
 
 typedef std::vector<InterStr> Interns;
 Interns interns;

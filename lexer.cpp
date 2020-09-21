@@ -19,7 +19,6 @@ typedef enum TokenKind {
 	TOKEN_OCT,
 	TOKEN_HEX,
 	TOKEN_FLOAT,
-	TOKEN_CHAR,
 	TOKEN_STR,
 	TOKEN_EOF,
 }TokenKind;
@@ -153,6 +152,7 @@ bool is_keyword(const char* name) {
 			token.mod = KEYWORD_RET;
 			break;
 		}
+		return true;
 	}
 }
 
@@ -298,7 +298,7 @@ bool expected_keyword(KeywordMod mod, bool error) {
 		return true;
 	}
 	else {
-		if (error) fatal("***");
+		if (error) fatal("e1");
 		else return false;
 	}
 }
@@ -309,7 +309,7 @@ bool expected_token(TokenKind kind, bool error) {
 		return true;
 	}
 	else {
-		if (error) fatal("***");
+		if (error) fatal("INVALID TOKEN [%c] AT LINE [%d], POSITION [%d].", *stream, src_line, (size_t)(stream - line_start));
 		else return false;
 	}
 }

@@ -17,3 +17,11 @@ FuncDecl* func_decl(const char* name, Statement* statement) {
 	f_decl->stmt = statement;
 	return f_decl;
 }
+
+Statement* statement(Expression* expr) {
+	return (Statement*)ast_alloc(sizeof(Expression));
+}
+
+Expression* expression() {
+	return (Expression*)ast_alloc(sizeof(Expression));
+}

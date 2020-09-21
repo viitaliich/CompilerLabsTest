@@ -6,9 +6,9 @@
 #include <cassert>
 #include <cstdarg>
 
+#include "common.cpp"
 #include "ast.h"
 #include "ast.cpp"
-#include "common.cpp"
 #include "lexer.cpp"
 #include "parser.cpp"
 

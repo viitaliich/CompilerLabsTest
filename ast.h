@@ -8,6 +8,7 @@ typedef struct Expression {
 		int int_val;
 		double float_val;
 		const char* str_val;
+		//double int_val;	// ???
 	};
 }Expression;
 
