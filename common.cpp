@@ -56,7 +56,7 @@ Pull str_pull;
 const char* str_intern_range(const char* start, const char* end) {
 	size_t len = end - start;
 	for (size_t i = 0; i < interns.size(); i++) {
-		if (interns[i].len == len && strcmp(interns[i].str, start) == 0) {
+		if (interns[i].len == len && strncmp(interns[i].str, start, len) == 0) {	// ??? strcmp
 			return interns[i].str;
 		}
 	}

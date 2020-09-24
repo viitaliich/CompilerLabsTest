@@ -128,7 +128,7 @@ void scan_int() {
 			stream++;
 		}
 		else {
-			fatal("UNEXPECTED SYMBOL [%c] AT LINE [%d], POSITION [%d]", *stream, src_line, (size_t)(stream - line_start));
+			fatal("UNEXPECTED SYMBOL [%c] AT LINE [%d], POSITION [%d]. MUST BE [b], [o] or [x]", *stream, src_line, (size_t)(stream - line_start));
 		}
 	}
 	int value = 0;
@@ -144,7 +144,7 @@ void scan_int() {
 
 bool is_keyword(const char* name) {
 	if (first_keyword <= name && name <= last_keyword){
-		switch (uintptr_t(name) - uintptr_t(first_keyword)) {
+		switch ((uintptr_t(name) - uintptr_t(first_keyword)) / sizeof(name)) {
 		case KEYWORD_DEF:
 			token.mod = KEYWORD_DEF;
 			break;
@@ -154,12 +154,18 @@ bool is_keyword(const char* name) {
 		}
 		return true;
 	}
+	return false;
 }
 
 void consume_token() {
 repeat:
 	token.start = stream;
 	switch (*stream) {
+	case '\r': {
+		stream++;
+		goto repeat;
+		break;
+	}
 	case '\n': {
 		stream++;
 		line_start = stream;
@@ -279,7 +285,7 @@ void init_stream(const char* str) {
 
 	stream = str;
 	src_line = 1;
-	line_start = stream;
+	line_start = stream - 1;
 	consume_token();
 
 }
@@ -292,25 +298,19 @@ bool is_mod(KeywordMod mod) {
 	return token.mod == mod;
 }
 
-bool expected_keyword(KeywordMod mod, bool error) {
+bool expected_keyword(KeywordMod mod) {
 	if (is_kind(TOKEN_KEYWORD) && is_mod(mod)) {
 		consume_token();
 		return true;
 	}
-	else {
-		if (error) fatal("e1");
-		else return false;
-	}
+	else fatal("e1");
 }
 
-bool expected_token(TokenKind kind, bool error) {
+bool expected_token(TokenKind kind) {
 	if (is_kind(kind)) {
 		consume_token();
 		return true;
 	}
-	else {
-		if (error) fatal("INVALID TOKEN [%c] AT LINE [%d], POSITION [%d].", *stream, src_line, (size_t)(stream - line_start));
-		else return false;
-	}
+	else fatal("INVALID TOKEN [%c] AT LINE [%d], POSITION [%d].", *stream, src_line, (size_t)(stream - line_start));
 }
 

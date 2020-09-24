@@ -4,15 +4,21 @@ uint16_t space_count_new = 0;
 
 const char* parse_name() {
 	const char* name = token.name;
-	expected_token(TOKEN_NAME, true);
+	expected_token(TOKEN_NAME);
 	return name;
 }
 
 void parse_spaces() {
 	space_count_old = space_count_new;	// save previous number 
-	while (expected_token(TOKEN_SPACE, false) || expected_token(TOKEN_TAB, false)) {
-		if (expected_token(TOKEN_SPACE, false)) space_count_new++;
-		else space_count_new += 4;
+	while (is_kind(TOKEN_SPACE) || is_kind(TOKEN_TAB)) {
+		if (is_kind(TOKEN_SPACE)) {
+			space_count_new++;
+			consume_token();
+		}
+		else {
+			space_count_new += 4;
+			consume_token();
+		}
 	}
 }
 
@@ -41,8 +47,8 @@ Expression* parse_expr() {
 Statement* parse_stmt() {
 	parse_spaces();
 	if (space_count_new <= space_count_old) fatal("e4");
-	expected_keyword(KEYWORD_RET, true);
-	expected_token(TOKEN_SPACE, false);
+	expected_keyword(KEYWORD_RET);
+	expected_token(TOKEN_SPACE);
 	Expression* expr = parse_expr();
 	expr->kind = RET_EXPR;
 	return statement(expr);
@@ -50,12 +56,12 @@ Statement* parse_stmt() {
 
 FuncDecl* parse_func_decl() {
 	parse_spaces();
-	expected_keyword(KEYWORD_DEF, true);
-	expected_token(TOKEN_SPACE, false);
+	expected_keyword(KEYWORD_DEF);
+	expected_token(TOKEN_SPACE);
 	const char* name = parse_name();
-	expected_token(TOKEN_LPAREN, true);
-	expected_token(TOKEN_RPAREN, true);
-	expected_token(TOKEN_COLON, true);
+	expected_token(TOKEN_LPAREN);
+	expected_token(TOKEN_RPAREN);
+	expected_token(TOKEN_COLON);
 	Statement* statement = parse_stmt();
 	return func_decl(name, statement);
 }
