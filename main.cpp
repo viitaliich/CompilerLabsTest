@@ -1,3 +1,7 @@
+// BUG: It's possible to compile [0b] or [0x] and so on
+// BUG: It's possible to compile [0.]
+
+#pragma once
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <fstream>

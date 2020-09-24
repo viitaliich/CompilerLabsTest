@@ -20,6 +20,7 @@ typedef enum TokenKind {
 	TOKEN_HEX,
 	TOKEN_FLOAT,
 	TOKEN_STR,
+	TOKEN_NEW_LINE,
 	TOKEN_EOF,
 }TokenKind;
 
@@ -44,11 +45,11 @@ int src_line;
 void scan_str() {
 	const char close_quote = *stream;
 	stream++;
-	char* str = NULL;
+	std::string str;
 	while (*stream && *stream != close_quote) {
 		char val = *stream;
 		if (val == '\n') {
-			fatal("STR TOKEN [%s] AT LINE [%d], POSITION [%d] CAN'T CONTAIN NEWLINE SYM.", token.start, src_line, (size_t)(stream - line_start));
+			fatal("STR TOKEN [%s] AT LINE [%d], POSITION [%d] CAN'T CONTAIN NEWLINE SYM.", token.start, src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 		}
 		else if (val == '\\'){
 			stream++;
@@ -75,21 +76,21 @@ void scan_str() {
 				val = 0;
 				break;
 			default:
-				fatal("INVALID ESCAPE SYMBOL [\\%c] AT LINE [%d], POSITION [%d]", *stream, src_line, (size_t)(stream - line_start));
+				fatal("INVALID ESCAPE SYMBOL [\\%c] AT LINE [%d], POSITION [%d]", *stream, src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 			}
 		}
-		strncat(str, (const char*) val, 1);
+		str.push_back(val);
 		stream++;
 		}
 	if(*stream == close_quote){
 		stream++;
 	}
 	else {
-		fatal("UNEXPECTED END OF STRING [%c] AT LINE [%d], POSITION [%d]", *stream, src_line, (size_t)(stream - line_start));
+		fatal("UNEXPECTED END OF STRING [%c] AT LINE [%d], POSITION [%d]", *stream, src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 	}
-	strncat(str, (const char*)0, 1);
+	str.push_back(0);
 	token.kind = TOKEN_STR;
-	token.str_val = str;
+	token.str_val = str.c_str();
 }
 
 void scan_float() {
@@ -128,15 +129,76 @@ void scan_int() {
 			stream++;
 		}
 		else {
-			fatal("UNEXPECTED SYMBOL [%c] AT LINE [%d], POSITION [%d]. MUST BE [b], [o] or [x]", *stream, src_line, (size_t)(stream - line_start));
+			fatal("UNEXPECTED SYMBOL [%c] AT LINE [%d], POSITION [%d]. MUST BE [b], [o] or [x]", *stream, src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 		}
 	}
 	int value = 0;
-	while (isdigit(*stream)) {
-		if (*stream - '0' > base) {
-			fatal("DIGIT [%c] AT LINE [%d], POSITION [%d] OUT OF RANGE FOR BASE [%d].", *stream, src_line, (size_t)(stream - line_start), base);
+	for (;;) {
+		bool flag = false;
+		int digit = 0;
+		switch (*stream) {
+		case '0':
+			digit = 0;
+			break;
+		case '1':
+			digit = 1;
+			break;
+		case '2':
+			digit = 2;
+			break;
+		case '3':
+			digit = 3;
+			break;
+		case '4':
+			digit = 4;
+			break;
+		case '5':
+			digit = 5;
+			break;
+		case '6':
+			digit = 6;
+			break;
+		case '7':
+			digit = 7;
+			break;
+		case '8':
+			digit = 8;
+			break;
+		case '9':
+			digit = 9;
+			break;
+		case 'A':
+			digit = 10;
+			break;
+		case 'B':
+			digit = 11;
+			break;
+		case 'C':
+			digit = 12;
+			break;
+		case 'D':
+			digit = 13;
+			break;
+		case 'E':
+			digit = 14;
+			break;
+		case 'F':
+			digit = 15;
+			break;
+		case 'G': case 'H': case 'I': case 'J': case 'K': case 'L': 
+		case 'M': case 'N': case 'O': case 'P': case 'Q': case 'R': 
+		case 'S': case 'T': case 'U': case 'V': case 'W': case 'X': case 'Y': case 'Z':
+			digit = 16;
+			break;
+		default:
+			flag = true;
+			break;
 		}
-		value = value * base + *stream - '0';
+		if (flag) break;
+		if (digit >= base) {
+			fatal("DIGIT [%c] AT LINE [%d], POSITION [%d] OUT OF RANGE FOR BASE [%d].", *stream, src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1), base);
+		}
+		value = value * base + digit;
 		stream++;
 	}
 	token.int_val = value;
@@ -167,10 +229,10 @@ repeat:
 		break;
 	}
 	case '\n': {
+		token.kind = TOKEN_NEW_LINE;
 		stream++;
 		line_start = stream;
 		src_line++;
-		goto repeat;
 		break;
 	}
 	case ' ': {
@@ -225,10 +287,9 @@ repeat:
 	case '.': {	// float numbers can start with point
 		if (isdigit(stream[1])) {
 			scan_float();
-			stream++;
 		}
 		else {
-			// ...
+			fatal("INVALID TOKEN AT LINE [%d], POSITION [%d].", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 		}
 		break;
 	}
@@ -254,7 +315,7 @@ repeat:
 		break;
 	}
 	default: {
-		fatal("INVALID TOKEN [%c] AT LINE [%d], POSITION [%d].", *stream, src_line, (size_t)(stream - line_start));
+		fatal("INVALID TOKEN [%s] AT LINE [%d], POSITION [%d].", *stream, src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 	}
 	}
 	token.end = stream;
@@ -285,9 +346,8 @@ void init_stream(const char* str) {
 
 	stream = str;
 	src_line = 1;
-	line_start = stream - 1;
+	line_start = stream;
 	consume_token();
-
 }
 
 bool is_kind(TokenKind kind) {
@@ -303,7 +363,7 @@ bool expected_keyword(KeywordMod mod) {
 		consume_token();
 		return true;
 	}
-	else fatal("e1");
+	else fatal("UNEXPECTED KEYWORD [%s] AT LINE [%d], POSITION [%d]", token.name, src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 }
 
 bool expected_token(TokenKind kind) {
@@ -311,6 +371,16 @@ bool expected_token(TokenKind kind) {
 		consume_token();
 		return true;
 	}
-	else fatal("INVALID TOKEN [%c] AT LINE [%d], POSITION [%d].", *stream, src_line, (size_t)(stream - line_start));
+	else {
+		switch (token.kind) {
+		case TOKEN_KEYWORD:
+		case TOKEN_NAME:
+			fatal("UNEXPECTED TOKEN [%s] AT LINE [%d], POSITION [%d].", *stream, src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
+			break;
+		default:
+			fatal("UNEXPECTED TOKEN AT LINE [%d], POSITION [%d].", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
+		}
+	}
+
 }
 
