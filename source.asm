@@ -1,3 +1,3 @@
 main: 
-	 mov eax, 4 
-	 ret 
+	mov eax, 0
+	ret

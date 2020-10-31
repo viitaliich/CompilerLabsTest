@@ -1,7 +1,3 @@
-// BUG: It's possible to compile [0b] or [0x] and so on
-// BUG: It's possible to compile [0.]
-// Cirillic
-
 #pragma once
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
@@ -28,7 +24,7 @@ char* read_file(const char* path) {
 	FILE* file = fopen(path, "rb");
 	if (!file) return NULL;
 	fseek(file, 0, SEEK_END);	// set cursor at the end of the file.
-	long size = ftell(file);	// number of bytes from beginning tj current cursor position
+	size_t size = ftell(file);	// number of bytes from beginning to current cursor position
 	fseek(file, 0, SEEK_SET);
 	char* str = (char*)xmalloc(size + 1, "read_file");
 	if (size != 0) {
@@ -98,7 +94,7 @@ bool compile_py_file(const char* path){
 }
 
 int main(int argc, char* argv) {
-
+	
 	const char* path = "source.py";
 	if (!compile_py_file(path)) {
 		printf("Compilation failed.\n");

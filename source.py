@@ -1,2 +1,2 @@
 def main():
-	return 4.5987
+	return 0

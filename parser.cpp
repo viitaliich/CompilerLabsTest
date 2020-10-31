@@ -52,8 +52,6 @@ Expression* parse_expr() {
 		break;
 	case TOKEN_STR:
 		fatal("STRING EXPRESSION ISN'T ALLOWED. LINE [%d], POSITION [%d].", src_line, (size_t)((uintptr_t)expr_start - (uintptr_t)line_start + 1));
-		//expr->str_val = token.str_val;
-		//consume_token();
 		break;
 	default:
 		fatal("INVALID EXPRESSION AT LINE [%d], POSITION [%d].", src_line, (size_t)((uintptr_t)expr_start - (uintptr_t)line_start + 1));
@@ -91,9 +89,6 @@ FuncDecl* parse_func_decl() {
 
 Program* parse_prog() {
 	FuncDecl* func_decl = parse_func_decl();
-	//if (!func_decl) {
-	//	fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
-	//}
 	return program(func_decl);
 }
 

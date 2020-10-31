@@ -117,16 +117,21 @@ void scan_int() {
 			base = 2;
 			token.kind = TOKEN_BIN;
 			stream++;
+			if (*stream == NULL) fatal("[0b] is not allowed");
 		}
 		else if (tolower(*stream) == 'o') {
 			base = 8;
 			token.kind = TOKEN_OCT;
 			stream++;
+			if (*stream == NULL) fatal("[0o] is not allowed");
+
 		}
 		else if (tolower(*stream) == 'x') {
 			base = 16;
 			token.kind = TOKEN_HEX;
 			stream++;
+			if (*stream == NULL) fatal("[0x] is not allowed");
+
 		}
 		/*else {
 			fatal("UNEXPECTED SYMBOL [%c] AT LINE [%d], POSITION [%d]. MUST BE [b], [o] or [x]", *stream, src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
@@ -386,6 +391,5 @@ bool expected_token(TokenKind kind) {
 			fatal("UNEXPECTED TOKEN AT LINE [%d], POSITION [%d].", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 		}
 	}
-
 }
 

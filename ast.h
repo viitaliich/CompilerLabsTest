@@ -30,4 +30,3 @@ typedef struct FuncDecl {
 typedef struct Program {
 	FuncDecl* func_decl;
 }Program;
-

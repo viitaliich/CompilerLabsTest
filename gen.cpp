@@ -14,18 +14,13 @@ char* buf_printf(char* buf, const char* format, ...) {
 }
 
 void gen_int_exp() {
-	buf = buf_printf(buf, "\t mov eax, %d \n", prog->func_decl->stmt->expr->int_val);
+	buf = buf_printf(buf, "\tmov eax, %d\n", prog->func_decl->stmt->expr->int_val);
 }
 
 void gen_float_exp() {
-	prog->func_decl->stmt->expr->int_val = (int)prog->func_decl->stmt->expr->float_val;	// float --> int
-	buf = buf_printf(buf, "\t mov eax, %d \n", prog->func_decl->stmt->expr->int_val);
+	prog->func_decl->stmt->expr->int_val = (int)prog->func_decl->stmt->expr->float_val;			// float to int
+	buf = buf_printf(buf, "\tmov eax, %d\n", prog->func_decl->stmt->expr->int_val);
 }
-
-//void gen_str_exp() {
-//	buf = buf_printf(buf, "\t ret %d \n", prog->func_decl->stmt->expr->int_val);
-//	printf("%s", buf);
-//}
 
 void gen_ret_exp() {
 	if (prog->func_decl->stmt->expr->kind == FLOAT) {
@@ -37,8 +32,7 @@ void gen_ret_exp() {
 	else {
 		fatal("Nothing to generate in return expression in function [%s]", prog->func_decl->name);
 	}
-	//if (prog->func_decl->stmt->expr->int_val != NULL) gen_str_exp(); return;
-	buf = buf_printf(buf, "\t ret \n");
+	buf = buf_printf(buf, "\tret\n");
 }
 
 void gen_stmt() {
