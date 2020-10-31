@@ -8,7 +8,9 @@ void* ast_alloc(size_t size) {
 }
 
 Program* program(FuncDecl* func_decl) {
-	return (Program*)ast_alloc(sizeof(FuncDecl));
+	Program* prog = (Program*)ast_alloc(sizeof(FuncDecl));
+	prog->func_decl = func_decl;
+	return prog;
 }
 
 FuncDecl* func_decl(const char* name, Statement* statement) {
@@ -19,9 +21,13 @@ FuncDecl* func_decl(const char* name, Statement* statement) {
 }
 
 Statement* statement(Expression* expr) {
-	return (Statement*)ast_alloc(sizeof(Expression));
+	Statement* stmt = (Statement*)ast_alloc(sizeof(Expression));
+	stmt->expr = expr;
+	stmt->kind = RET_STMT;
+	return stmt;
 }
 
 Expression* expression() {
-	return (Expression*)ast_alloc(sizeof(Expression));
+	Expression* exp = (Expression*)ast_alloc(sizeof(Expression));
+	return exp;
 }

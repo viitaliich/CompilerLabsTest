@@ -1,6 +1,8 @@
 uint16_t space_count_old = 0;
 uint16_t space_count_new = 0;
 
+Program* prog = nullptr;
+
 const char* parse_name() {
 	const char* name = nullptr;
 	if (is_kind(TOKEN_NAME)) {
@@ -40,15 +42,18 @@ Expression* parse_expr() {
 	case TOKEN_OCT:
 	case TOKEN_HEX:
 		expr->int_val = token.int_val;
+		expr->kind = INT;
 		consume_token();
 		break;
 	case TOKEN_FLOAT:
 		expr->float_val = token.float_val;
+		expr->kind = FLOAT;
 		consume_token();
 		break;
 	case TOKEN_STR:
-		expr->str_val = token.str_val;
-		consume_token();
+		fatal("STRING EXPRESSION ISN'T ALLOWED. LINE [%d], POSITION [%d].", src_line, (size_t)((uintptr_t)expr_start - (uintptr_t)line_start + 1));
+		//expr->str_val = token.str_val;
+		//consume_token();
 		break;
 	default:
 		fatal("INVALID EXPRESSION AT LINE [%d], POSITION [%d].", src_line, (size_t)((uintptr_t)expr_start - (uintptr_t)line_start + 1));
@@ -60,17 +65,15 @@ Statement* parse_stmt() {
 	parse_spaces();
 	if (space_count_new <= space_count_old) fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 	expected_keyword(KEYWORD_RET);
-	expected_token(TOKEN_SPACE);
 	while_spaces();
 	Expression* expr = parse_expr();
-	expr->kind = RET_EXPR;
 	return statement(expr);
 }
 
 FuncDecl* parse_func_decl() {
 	parse_spaces();
 	expected_keyword(KEYWORD_DEF);
-	expected_token(TOKEN_SPACE);
+	while_spaces();
 	const char* name = parse_name();
 	while_spaces();
 	expected_token(TOKEN_LPAREN);
@@ -95,5 +98,5 @@ Program* parse_prog() {
 }
 
 void parse_file() {
-	Program* program = parse_prog();
+	prog = parse_prog();
 }

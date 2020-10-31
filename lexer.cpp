@@ -128,9 +128,9 @@ void scan_int() {
 			token.kind = TOKEN_HEX;
 			stream++;
 		}
-		else {
+		/*else {
 			fatal("UNEXPECTED SYMBOL [%c] AT LINE [%d], POSITION [%d]. MUST BE [b], [o] or [x]", *stream, src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
-		}
+		}*/
 	}
 	int value = 0;
 	for (;;) {
@@ -315,7 +315,12 @@ repeat:
 		break;
 	}
 	default: {
-		fatal("INVALID TOKEN [%s] AT LINE [%d], POSITION [%d].", *stream, src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
+		if (sizeof(*stream) == 1) {
+			fatal("INVALID TOKEN [%c] AT LINE [%d], POSITION [%d].", *stream, src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
+		}
+		else {
+			fatal("INVALID TOKEN [%s] AT LINE [%d], POSITION [%d].", *stream, src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
+		}
 	}
 	}
 	token.end = stream;
@@ -363,7 +368,7 @@ bool expected_keyword(KeywordMod mod) {
 		consume_token();
 		return true;
 	}
-	else fatal("UNEXPECTED KEYWORD [%s] AT LINE [%d], POSITION [%d]", token.name, src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
+	else fatal("UNEXPECTED KEYWORD AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 }
 
 bool expected_token(TokenKind kind) {
@@ -375,7 +380,7 @@ bool expected_token(TokenKind kind) {
 		switch (token.kind) {
 		case TOKEN_KEYWORD:
 		case TOKEN_NAME:
-			fatal("UNEXPECTED TOKEN [%s] AT LINE [%d], POSITION [%d].", *stream, src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
+			fatal("UNEXPECTED TOKEN AT LINE [%d], POSITION [%d].", *stream, src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 			break;
 		default:
 			fatal("UNEXPECTED TOKEN AT LINE [%d], POSITION [%d].", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));

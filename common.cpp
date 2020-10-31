@@ -19,6 +19,15 @@ void* xmalloc(size_t bytes, const char* mes) {
 	return ptr;
 }
 
+void* xrealloc(void* ptr, size_t num_bytes) {
+	ptr = realloc(ptr, num_bytes);
+	if (!ptr) {
+		perror("xrealloc failed");
+		exit(1);
+	}
+	return ptr;
+}
+
 typedef std::vector<char*> Blocks;
 
 typedef struct Pull {

@@ -1,6 +1,11 @@
 typedef enum ExprKind {
-	RET_EXPR,
+	INT,
+	FLOAT,
 }ExprKind;
+
+typedef enum StmtKind {
+	RET_STMT,
+}StmtKind;
 
 typedef struct Expression {
 	ExprKind kind;
@@ -14,6 +19,7 @@ typedef struct Expression {
 
 typedef struct Statement {
 	Expression* expr;
+	StmtKind kind;
 }Statement;
 
 typedef struct FuncDecl {
