@@ -10,10 +10,10 @@ void fatal(const char* message, ...) {
 	exit(1);
 }
 
-void* xmalloc(size_t bytes, const char* mes) {
+void* xmalloc(size_t bytes, const char* fail_mes) {
 	void* ptr = malloc(bytes);
 	if (!ptr) {
-		printf("%s xmalloc failed", mes);
+		printf("%s xmalloc failed", fail_mes);
 		exit(1);
 	}
 	return ptr;
@@ -31,7 +31,7 @@ void* xrealloc(void* ptr, size_t num_bytes) {
 typedef std::vector<char*> Blocks;
 
 typedef struct Pull {
-	char* ptr;
+	char* ptr;		// start of free mem
 	char* end;
 	Blocks blocks;
 }Pull;
@@ -69,7 +69,7 @@ const char* str_intern_range(const char* start, const char* end) {
 			return interns[i].str;
 		}
 	}
-	char* str = (char*)pull_alloc(&str_pull, len + 1);	
+	char* str = (char*)pull_alloc(&str_pull, len + 1);	// +1 ???
 	memcpy(str, start, len);
 	str[len] = 0;
 	interns.push_back({ str, len });

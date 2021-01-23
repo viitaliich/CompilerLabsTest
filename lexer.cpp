@@ -48,9 +48,11 @@ void scan_str() {
 	std::string str;
 	while (*stream && *stream != close_quote) {
 		char val = *stream;
+		// sting can't contain new line symbol
 		if (val == '\n') {
 			fatal("STR TOKEN [%s] AT LINE [%d], POSITION [%d] CAN'T CONTAIN NEWLINE SYM.", token.start, src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 		}
+		// TO DO: fot what is this if previous comment?
 		else if (val == '\\'){
 			stream++;
 			switch (*stream){
@@ -211,7 +213,7 @@ void scan_int() {
 
 bool is_keyword(const char* name) {
 	if (first_keyword <= name && name <= last_keyword){
-		switch ((uintptr_t(name) - uintptr_t(first_keyword)) / sizeof(name)) {
+		switch ((uintptr_t(name) - uintptr_t(first_keyword)) / sizeof(name)) {			// ??? sizeof(name) is always the same, its a pointer
 		case KEYWORD_DEF:
 			token.mod = KEYWORD_DEF;
 			break;
@@ -262,7 +264,7 @@ repeat:
 			stream++;
 		}
 		token.name = str_intern_range(token.start, stream);
-		token.kind = is_keyword(token.name) ? TOKEN_KEYWORD : TOKEN_NAME;
+		token.kind = is_keyword(token.name) ? TOKEN_KEYWORD : TOKEN_NAME;		// ??? change is_keyword checking
 		break;
 	}
 
@@ -289,7 +291,7 @@ repeat:
 		break;
 	}
 
-	case '.': {	// float numbers can start with point
+	case '.': {						// float numbers can start with point
 		if (isdigit(stream[1])) {
 			scan_float();
 		}
@@ -344,6 +346,7 @@ void init_keywords() {
 	static bool inited;
 	if (inited) return;
 	
+	// ??? swap lines ???
 	first_keyword = keyword("def");
 	char* pull_end = str_pull.end;	// for future checks. All keywords must be in the same block.
 	last_keyword = keyword("return");

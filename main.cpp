@@ -17,15 +17,18 @@
 
 char* read_file(const char* path) {
 	size_t path_len = strlen(path);
-	if (path[path_len - 1] != 'y') {
-		printf("extension error");
-		exit(1);
+	if (path[path_len - 1] != 'y') {		// TO DO: new extension checking mechanism
+		fatal("Source file extension error.");
 	}
+	
 	FILE* file = fopen(path, "rb");
 	if (!file) return NULL;
+	
+	// file size detection
 	fseek(file, 0, SEEK_END);	// set cursor at the end of the file.
 	size_t size = ftell(file);	// number of bytes from beginning to current cursor position
 	fseek(file, 0, SEEK_SET);
+	
 	char* str = (char*)xmalloc(size + 1, "read_file");
 	if (size != 0) {
 		if (fread(str, size, 1, file) != 1) {
@@ -93,9 +96,38 @@ bool compile_py_file(const char* path){
 	return true;
 }
 
+void clear_buf() {
+	free(buf);
+	buf_cap = 0;
+	buf_len = 0;
+}
+
+bool gen_bat_file(const char* path) {
+	clear_buf();
+	buf_cap = 2048;		// TO DO: #define 2048	???
+	buf = (char*)xmalloc(buf_cap, "Can't allocate space for char buffer");
+	buf = buf_printf(buf, \
+"c:\\masm32\\bin\\ml /c /Zd /coff source.asm\n\
+c:\\masm32\\bin\\Link /SUBSYSTEM:CONSOLE source.obj\n\
+echo RESULT BEGIN...\n\
+source.exe\n\
+echo ...RESULT END\n\
+PAUSE\n");
+
+	const char* bat_code = buf;
+	const char* bat_path = path;
+	if (!bat_path) {
+		return false;
+	}
+	if (!write_file(bat_path, bat_code, strlen(bat_code))) {
+		return false;
+	}
+	return true;
+}
+
 void test_asm_code() {
 	int a;
-	
+
 	__asm {
 		//main:
 		mov eax, 55
@@ -109,47 +141,21 @@ void test_asm_code() {
 	system("PAUSE");
 }
 
-void clear_buf() {
-	free(buf);
-	buf_cap = 0;
-	buf_len = 0;
-}
-
-bool gen_bat_file(const char* path) {
-	clear_buf();
-	buf = (char*)xmalloc(2048, "Can't allocate space for char buffer");
-	buf_cap = 2048;
-	buf = buf_printf(buf, \
-		/*"d:\ncd dev\\CompilerLabsTest\n\*/
-"c:\\masm32\\bin\\ml /c /Zd /coff source.asm\n\
-c:\\masm32\\bin\\Link /SUBSYSTEM:CONSOLE source.obj\n\
-echo RESULT BEGIN...\n\
-source.exe\n\
-echo ...RESULT END\n\
-PAUSE\n");
-	//printf("START:\n%s\nEND\n", buf);
-
-	const char* bat_code = buf;
-	const char* bat_path = path;
-	if (!bat_path) {
-		return false;
-	}
-	if (!write_file(bat_path, bat_code, strlen(bat_code))) {
-		return false;
-	}
-	return true;
-}
-
 int main(int argc, char* argv) {
 
-	const char* path = "source.py";
+	// TO DO: manual path input
+	const char* path = "source.py";			// path to source code
 	if (!compile_py_file(path)) {
 		printf("Compilation failed.\n");
 		return 1;
 	}
 	printf("Compilation succeeded.\n");
-	gen_bat_file("run_test.bat");
-	system("run_test.bat");
+	// TO DO: auto generation pathes
+	if (!gen_bat_file("source.bat")) {
+		printf("BAT file generation failed.\n");
+		return 1;
+	}
+	system("source.bat");
 
 	// TEST ASM COSE
 	//test_asm_code();

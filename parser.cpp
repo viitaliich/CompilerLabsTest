@@ -13,6 +13,7 @@ const char* parse_name() {
 }
 
 void parse_spaces() {
+	// TO DO: could be errors in count methodology. Number of new lines (\n) is not taking into account
 	space_count_old = space_count_new;	// save previous number 
 	space_count_new = 0;
 	while (is_kind(TOKEN_SPACE) || is_kind(TOKEN_TAB)) {
@@ -43,12 +44,12 @@ Expression* parse_expr() {
 	case TOKEN_HEX:
 		expr->int_val = token.int_val;
 		expr->kind = INT;
-		consume_token();
+		consume_token();		// do we need this here, this is the end ???
 		break;
 	case TOKEN_FLOAT:
 		expr->float_val = token.float_val;
 		expr->kind = FLOAT;
-		consume_token();
+		consume_token();		// do we need this here, this is the end ???
 		break;
 	case TOKEN_STR:
 		fatal("STRING EXPRESSION ISN'T ALLOWED. LINE [%d], POSITION [%d].", src_line, (size_t)((uintptr_t)expr_start - (uintptr_t)line_start + 1));
@@ -62,10 +63,10 @@ Expression* parse_expr() {
 Statement* parse_stmt() {
 	parse_spaces();
 	if (space_count_new <= space_count_old) fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
-	expected_keyword(KEYWORD_RET);
+	expected_keyword(KEYWORD_RET);		
 	while_spaces();
 	Expression* expr = parse_expr();
-	return statement(expr);
+	return statement(expr);				// TO DO: pay atencion, do like in expression parsing
 }
 
 FuncDecl* parse_func_decl() {
@@ -93,5 +94,6 @@ Program* parse_prog() {
 }
 
 void parse_file() {
+	// "prog" is not declared here because this variable is used in "code generation" stage
 	prog = parse_prog();
 }

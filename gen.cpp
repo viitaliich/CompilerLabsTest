@@ -5,8 +5,11 @@ size_t buf_cap = 0;
 char* buf_printf(char* buf, const char* format, ...) {
 	va_list args;
 	va_start(args, format);
-	if (buf_cap - buf_len < sizeof(args)) (char*)xrealloc(buf, 2 * buf_cap + sizeof(args));
-	buf_cap = buf_cap * 2 + sizeof(args);
+	// ??? may be errors (but may be not)
+	if (buf_cap - buf_len < sizeof(args)) {
+		(char*)xrealloc(buf, 2 * buf_cap + sizeof(args));
+		buf_cap = buf_cap * 2 + sizeof(args);
+	}
 	int ret = vsprintf(buf + buf_len, format, args);
 	buf_len += ret;
 	va_end(args);
@@ -93,6 +96,7 @@ void gen_func_decl() {
 	gen_NumbToStr();
 }
 
+// TO DO: path generator
 void gen_includes() {
 	buf = buf_printf(buf, ".386\n.model flat, stdcall\noption casemap : none\n\
 include     c:\\masm32\\include\\windows.inc\n\
@@ -110,9 +114,9 @@ void gen_prog() {
 }
 
 void code_gen() {
-	buf = (char*)xmalloc(2048, "Can't allocate buffer for generated code");
-	buf_cap = 2048;
-
+	buf_cap = 2048;		// TO DO: #define 2048		???
+	buf = (char*)xmalloc(buf_cap, "Can't allocate buffer for generated code");
+	
 	if (prog == nullptr) fatal("Nothing to generate");
 	gen_prog();
 
