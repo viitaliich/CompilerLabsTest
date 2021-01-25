@@ -150,6 +150,7 @@ int main(int argc, char* argv) {
 		return 1;
 	}
 	printf("Compilation succeeded.\n");
+	
 	// TO DO: auto generation pathes
 	if (!gen_bat_file("source.bat")) {
 		printf("BAT file generation failed.\n");

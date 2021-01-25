@@ -49,6 +49,7 @@ void* pull_alloc(Pull* pull, size_t min_size) {
 	}
 	void* ptr = pull->ptr;
 	pull->ptr += min_size;	// update pointer on free position
+	pull->blocks.push_back(pull->ptr);
 	return ptr;
 }
 
@@ -69,11 +70,14 @@ const char* str_intern_range(const char* start, const char* end) {
 			return interns[i].str;
 		}
 	}
-	char* str = (char*)pull_alloc(&str_pull, len + 1);	// +1 ???
-	memcpy(str, start, len);
-	str[len] = 0;
-	interns.push_back({ str, len });
-	return str;
+	
+	//char* str = (char*)pull_alloc(&str_pull, len + 1);
+	//memcpy(str, start, len);
+	//str[len] = 0;
+	
+	interns.push_back({ start, len });
+	//interns.push_back({ str, len });
+	return start;
 }
 
 const char* str_intern(const char* str) {

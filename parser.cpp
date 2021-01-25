@@ -38,6 +38,12 @@ Expression* parse_expr() {
 	const char* expr_start = token.start;
 	Expression* expr = expression();
 	switch (token.kind) {
+	case TOKEN_KEYWORD: {
+		if (token.mod == KEYWORD_NOT) {
+			printf("OK***********************");
+		} else fatal("FORBIDDEN KEYWORD. LINE [%d], POSITION [%d].", src_line, (size_t)((uintptr_t)expr_start - (uintptr_t)line_start + 1));
+		break;
+	}
 	case TOKEN_INT:
 	case TOKEN_BIN:
 	case TOKEN_OCT:

@@ -3,6 +3,7 @@ const char* last_keyword;
 
 typedef enum KeywordMod {
 	KEYWORD_DEF,
+	KEYWORD_NOT,
 	KEYWORD_RET,
 }KeywordMod;
 
@@ -22,6 +23,13 @@ typedef enum TokenKind {
 	TOKEN_STR,
 	TOKEN_NEW_LINE,
 	TOKEN_EOF,
+
+	TOKEN_COMP,		// bitwise complement
+	TOKEN_NEG,
+	TOKEN_LOGNEG,	// logical negation
+	TOKEN_ADD,
+	TOKEN_MUL,
+	TOKEN_DIV,
 }TokenKind;
 
 typedef struct Token {
@@ -213,12 +221,15 @@ void scan_int() {
 
 bool is_keyword(const char* name) {
 	if (first_keyword <= name && name <= last_keyword){
-		switch ((uintptr_t(name) - uintptr_t(first_keyword)) / sizeof(name)) {			// ??? sizeof(name) is always the same, its a pointer
+		switch ((uintptr_t(name) - uintptr_t(first_keyword)) / sizeof(name)) {
 		case KEYWORD_DEF:
 			token.mod = KEYWORD_DEF;
 			break;
 		case KEYWORD_RET:
 			token.mod = KEYWORD_RET;
+			break;
+		case KEYWORD_NOT:
+			token.mod = KEYWORD_NOT;
 			break;
 		}
 		return true;
@@ -316,6 +327,36 @@ repeat:
 		break;
 	}
 
+	case '~': {
+		token.kind = TOKEN_COMP;
+		stream++;
+		break;
+	}
+		
+	case '-': {
+		token.kind = TOKEN_NEG;
+		stream++;
+		break;
+	}
+
+	case '+': {
+		token.kind = TOKEN_ADD;
+		stream++;
+		break;
+	}
+
+	case '*': {
+		token.kind = TOKEN_MUL;
+		stream++;
+		break;
+	}
+
+	case '/': {
+		token.kind = TOKEN_DIV;
+		stream++;
+		break;
+	}
+
 	case '\0': {
 		token.kind = TOKEN_EOF;
 		stream++;
@@ -338,7 +379,7 @@ Keywords keywords;
 
 const char* keyword(const char* str) {
 	const char* keyword = str_intern(str);
-	keywords.push_back(keyword);
+	keywords.push_back(keyword);		// ??? don't need this
 	return keyword;
 }
 
@@ -348,9 +389,12 @@ void init_keywords() {
 	
 	// ??? swap lines ???
 	first_keyword = keyword("def");
-	char* pull_end = str_pull.end;	// for future checks. All keywords must be in the same block.
+
+	//char* pull_end = str_pull.end;	// for future checks. All keywords must be in the same block.
+	keyword("not");
+	//char* pull_end = str_pull.end;	// for future checks. All keywords must be in the same block.
 	last_keyword = keyword("return");
-	assert(str_pull.end == pull_end);
+	//assert(str_pull.end == pull_end);
 	inited = true;
 }
 
