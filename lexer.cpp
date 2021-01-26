@@ -3,7 +3,7 @@ const char* last_keyword;
 
 typedef enum KeywordMod {
 	KEYWORD_DEF,
-	KEYWORD_NOT,
+	KEYWORD_NOT,	// logical negation (not)
 	KEYWORD_RET,
 }KeywordMod;
 
@@ -26,7 +26,7 @@ typedef enum TokenKind {
 
 	TOKEN_COMP,		// bitwise complement
 	TOKEN_NEG,
-	TOKEN_LOGNEG,	// logical negation
+	//TOKEN_LOGNEG,		// logical negation (not) is keyword
 	TOKEN_ADD,
 	TOKEN_MUL,
 	TOKEN_DIV,

@@ -1,6 +1,13 @@
 typedef enum ExprKind {
-	INT,
-	FLOAT,
+	EXP_INT,
+	EXP_FLOAT,
+	EXP_UN_COMP,
+	EXP_UN_NEG,
+	EXP_UN_LOGNEG,
+	EXP_BIN_ADD,
+	EXP_BIN_NEG,
+	EXP_BIN_MUL,
+	EXP_BIN_DIV,
 }ExprKind;
 
 typedef enum StmtKind {
@@ -15,6 +22,9 @@ typedef struct Expression {
 		const char* str_val;
 		//double int_val;	// ???
 	};
+	Expression* exp_left;
+	Expression* exp_right;
+
 }Expression;
 
 typedef struct Statement {

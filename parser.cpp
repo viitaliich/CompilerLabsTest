@@ -34,27 +34,22 @@ void while_spaces() {
 	}
 }
 
-Expression* parse_expr() {
-	const char* expr_start = token.start;
+void function() {
+	const char* expr_start = token.start;		// for error place detection
+
 	Expression* expr = expression();
 	switch (token.kind) {
-	case TOKEN_KEYWORD: {
-		if (token.mod == KEYWORD_NOT) {
-			printf("OK***********************");
-		} else fatal("FORBIDDEN KEYWORD. LINE [%d], POSITION [%d].", src_line, (size_t)((uintptr_t)expr_start - (uintptr_t)line_start + 1));
-		break;
-	}
 	case TOKEN_INT:
 	case TOKEN_BIN:
 	case TOKEN_OCT:
 	case TOKEN_HEX:
 		expr->int_val = token.int_val;
-		expr->kind = INT;
+		expr->kind = EXP_INT;
 		consume_token();		// do we need this here, this is the end ???
 		break;
 	case TOKEN_FLOAT:
 		expr->float_val = token.float_val;
-		expr->kind = FLOAT;
+		expr->kind = EXP_FLOAT;
 		consume_token();		// do we need this here, this is the end ???
 		break;
 	case TOKEN_STR:
@@ -62,6 +57,40 @@ Expression* parse_expr() {
 		break;
 	default:
 		fatal("INVALID EXPRESSION AT LINE [%d], POSITION [%d].", src_line, (size_t)((uintptr_t)expr_start - (uintptr_t)line_start + 1));
+	}
+
+	return expr;
+}
+
+
+
+Expression* parse_notop() {
+	Expression* expr_left = parse_term();
+	while (token.kind == TOKEN_ADD || token.kind == TOKEN_NEG) {
+		Expression* expr = expression();
+		if (token.kind == TOKEN_ADD) {
+			expr->kind == EXP_BIN_ADD;
+		} else expr->kind = EXP_BIN_NEG;
+		consume_token();
+		expr->exp_left = expr_left;
+		expr->exp_right = parse_term();
+		expr_left = expr;
+	}
+}
+
+Expression* parse_expr() {
+	const char* expr_start = token.start;		// ??? for what?
+
+	Expression* expr = expression();
+	if (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_NOT) {
+		expr->kind = EXP_UN_LOGNEG;
+		consume_token();
+		while_spaces();			
+		expr->exp_right = parse_expr();
+	}
+	else {
+		expr = parse_notop();		// ???
+		while_spaces();		// ??? spaces in this block
 	}
 	return expr;
 }
@@ -72,6 +101,7 @@ Statement* parse_stmt() {
 	expected_keyword(KEYWORD_RET);		
 	while_spaces();
 	Expression* expr = parse_expr();
+	while_spaces();
 	return statement(expr);				// TO DO: pay atencion, do like in expression parsing
 }
 
