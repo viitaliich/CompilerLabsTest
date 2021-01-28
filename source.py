@@ -1,2 +1,2 @@
 def main():
-	return 99
+	return - -	~~ ~	-(9/9)+6  

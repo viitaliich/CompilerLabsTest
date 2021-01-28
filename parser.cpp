@@ -34,11 +34,37 @@ void while_spaces() {
 	}
 }
 
-void function() {
-	const char* expr_start = token.start;		// for error place detection
+Expression* parse_expr();
 
+Expression* parse_factor() {
+	const char* expr_start = token.start;		// for error place detection
 	Expression* expr = expression();
 	switch (token.kind) {
+	// TO DO: check correctness on code generation stage of TOKEN_LPAREN
+	case TOKEN_LPAREN: {
+		consume_token();
+		while_spaces();
+		expr = parse_expr();
+		if (token.kind != TOKEN_RPAREN) 
+			fatal("NO CLOSE PARENTHESE AT LINE [%d], POSITION [%d].", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
+		consume_token();
+		while_spaces();		// do we need this here?
+		break;
+	}
+	case TOKEN_COMP: {
+		expr->kind = EXP_UN_COMP;
+		consume_token();
+		while_spaces();
+		expr->exp_right = parse_factor();
+		break;
+	}
+	case TOKEN_NEG: {
+		expr->kind = EXP_UN_NEG;
+		consume_token();
+		while_spaces();
+		expr->exp_right = parse_factor();
+		break;
+	}
 	case TOKEN_INT:
 	case TOKEN_BIN:
 	case TOKEN_OCT:
@@ -62,25 +88,42 @@ void function() {
 	return expr;
 }
 
-
-
-Expression* parse_notop() {
-	Expression* expr_left = parse_term();
-	while (token.kind == TOKEN_ADD || token.kind == TOKEN_NEG) {
+Expression* parse_term() {
+	Expression* expr_left = parse_factor();
+	while_spaces();
+	while (token.kind == TOKEN_MUL || token.kind == TOKEN_DIV) {
 		Expression* expr = expression();
-		if (token.kind == TOKEN_ADD) {
-			expr->kind == EXP_BIN_ADD;
-		} else expr->kind = EXP_BIN_NEG;
+		if (token.kind == TOKEN_MUL) {
+			expr->kind = EXP_BIN_MUL;
+		}
+		else expr->kind = EXP_BIN_DIV;
 		consume_token();
+		while_spaces();
 		expr->exp_left = expr_left;
 		expr->exp_right = parse_term();
 		expr_left = expr;
 	}
+	return expr_left;
+}
+
+Expression* parse_notop() {
+	Expression* expr_left = parse_term();
+	while_spaces();
+	while (token.kind == TOKEN_ADD || token.kind == TOKEN_NEG) {
+		Expression* expr = expression();
+		if (token.kind == TOKEN_ADD) {
+			expr->kind = EXP_BIN_ADD;
+		} else expr->kind = EXP_BIN_NEG;
+		consume_token();
+		while_spaces();
+		expr->exp_left = expr_left;
+		expr->exp_right = parse_term();
+		expr_left = expr;
+	}
+	return expr_left;
 }
 
 Expression* parse_expr() {
-	const char* expr_start = token.start;		// ??? for what?
-
 	Expression* expr = expression();
 	if (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_NOT) {
 		expr->kind = EXP_UN_LOGNEG;
@@ -89,8 +132,8 @@ Expression* parse_expr() {
 		expr->exp_right = parse_expr();
 	}
 	else {
-		expr = parse_notop();		// ???
-		while_spaces();		// ??? spaces in this block
+		expr = parse_notop();		// could be errors (not shure) ???
+		while_spaces();
 	}
 	return expr;
 }

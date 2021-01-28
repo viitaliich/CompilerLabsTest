@@ -33,14 +33,17 @@ typedef std::vector<char*> Blocks;
 typedef struct Pull {
 	char* ptr;		// start of free mem
 	char* end;
-	Blocks blocks;
+	//Blocks blocks;
 }Pull;
+
+Pull str_pull;
+Blocks str_pull_blocks;			// Blocks are related to Pull
 
 void pull_append(Pull* pull, size_t min_size) {
 	size_t size = MAX(PULL_BLOCK_SIZE, min_size);
 	pull->ptr = (char*)xmalloc(size, "can't append to memory pull");
 	pull->end = pull->ptr + size;
-	pull->blocks.push_back(pull->ptr);
+	str_pull_blocks.push_back(pull->ptr);
 }
 
 void* pull_alloc(Pull* pull, size_t min_size) {
@@ -49,7 +52,7 @@ void* pull_alloc(Pull* pull, size_t min_size) {
 	}
 	void* ptr = pull->ptr;
 	pull->ptr += min_size;	// update pointer on free position
-	pull->blocks.push_back(pull->ptr);
+	str_pull_blocks.push_back(pull->ptr);
 	return ptr;
 }
 
@@ -61,8 +64,6 @@ typedef struct InterStr {
 typedef std::vector<InterStr> Interns;
 Interns interns;
 
-Pull str_pull;		
-
 const char* str_intern_range(const char* start, const char* end) {
 	size_t len = end - start;
 	for (size_t i = 0; i < interns.size(); i++) {
@@ -71,13 +72,14 @@ const char* str_intern_range(const char* start, const char* end) {
 		}
 	}
 	
-	//char* str = (char*)pull_alloc(&str_pull, len + 1);
-	//memcpy(str, start, len);
-	//str[len] = 0;
+	char* str = (char*)pull_alloc(&str_pull, len + 1);
+	//char* str = (char*)xmalloc(len + 1, "Can't allocate memory for strintg in str_intern_range");
+	memcpy(str, start, len);
+	str[len] = 0;
 	
-	interns.push_back({ start, len });
-	//interns.push_back({ str, len });
-	return start;
+	//interns.push_back({ start, len });
+	interns.push_back({ str, len });
+	return str;
 }
 
 const char* str_intern(const char* str) {
