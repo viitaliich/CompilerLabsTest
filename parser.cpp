@@ -40,7 +40,7 @@ Expression* parse_factor() {
 	const char* expr_start = token.start;		// for error place detection
 	Expression* expr = expression();
 	switch (token.kind) {
-	// TO DO: check correctness on code generation stage of TOKEN_LPAREN
+	// TO DO: check correctness of code generation stage of TOKEN_LPAREN
 	case TOKEN_LPAREN: {
 		consume_token();
 		while_spaces();

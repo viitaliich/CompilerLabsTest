@@ -25,7 +25,8 @@ start:
 	invoke  ExitProcess, 0
 
 main PROC
-	mov ebx, 99
+	mov ebx, 1096
+	neg ebx
 	ret
 
 main ENDP
@@ -36,17 +37,37 @@ NumbToStr PROC uses ebx x:DWORD,buffer:DWORD
 	mov	eax, x
 	mov	ebx, 10
 	add	ecx, ebx
+
+	cmp eax, 0
+	jge lbl
+	neg eax
+
 @@:
+	xor	edx, edx
+	div	ebx
+	add	edx, 48
+	mov	BYTE PTR[ecx+1], dl
+	dec	ecx
+	test	eax, eax
+	jnz	@b
+	mov	BYTE PTR[ecx+1], '-'
+	inc	ecx
+	mov	eax, ecx
+	jmp stp
+
+lbl:
 	xor	edx, edx
 	div	ebx
 	add	edx, 48
 	mov	BYTE PTR[ecx], dl
 	dec	ecx
 	test	eax, eax
-	jnz	@b
+	jnz	lbl
 	inc	ecx
 	mov	eax, ecx
+stp:
 	ret
+
 NumbToStr	ENDP
 
 END	start
