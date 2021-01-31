@@ -25,8 +25,7 @@ start:
 	invoke  ExitProcess, 0
 
 main PROC
-	mov ebx, 1096
-	neg ebx
+	mov ebx, 7
 	ret
 
 main ENDP

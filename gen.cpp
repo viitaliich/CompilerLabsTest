@@ -31,9 +31,59 @@ void gen_unneg_exp(Expression* expr) {
 	buf = buf_printf(buf, "\tneg ebx\n");
 }
 
+void gen_uncomp_exp(Expression* expr) {
+	gen_exp(expr->exp_right);
+	buf = buf_printf(buf, "\tnot ebx\n");
+}
+
+void gen_unlogneg_exp(Expression* expr) {
+	gen_exp(expr->exp_right);
+	buf = buf_printf(buf, 
+		"\tcmp ebx, 0\n\
+\tmov ebx, 0\n\
+\tsete bl\n");			// or EBX		???
+}
+
+void gen_binadd_exp(Expression* expr) {
+	gen_exp(expr->exp_left);
+	buf = buf_printf(buf, "\tpush ebx\n");
+	gen_exp(expr->exp_right);
+	buf = buf_printf(buf, 
+		"\tpop ecx\n\
+\tadd ebx, ecx\n");
+}
+
+void gen_binsub_exp(Expression* expr) {
+	gen_exp(expr->exp_right);
+	buf = buf_printf(buf, "\tpush ebx\n");
+	gen_exp(expr->exp_left);
+	buf = buf_printf(buf,
+		"\tpop ecx\n\
+\tsub ebx, ecx\n");
+}
+
+void gen_binmul_exp(Expression* expr) {
+	gen_exp(expr->exp_left);
+	buf = buf_printf(buf, "\tpush ebx\n");
+	gen_exp(expr->exp_right);
+	buf = buf_printf(buf,
+		"\tpop ecx\n\
+\timul ebx, ecx\n");
+}
+
+void gen_bindiv_exp(Expression* expr) {
+	// TO DO: division on zero warning		???
+	gen_exp(expr->exp_left);
+	buf = buf_printf(buf, "\tmov eax, ebx\n\
+\tcdq\n");
+	gen_exp(expr->exp_right);
+	buf = buf_printf(buf, "\tmov ecx, ebx\n");
+	buf = buf_printf(buf, "\tidiv ecx\n");
+	buf = buf_printf(buf, "\tmov ebx, eax\n");
+}
+
 void gen_exp(Expression* expr) {
 	switch(expr->kind){
-	//switch (prog->func_decl->stmt->expr->kind) {
 	case EXP_INT: {
 		gen_int_exp(expr);
 		break;
@@ -47,27 +97,27 @@ void gen_exp(Expression* expr) {
 		break;
 	}
 	case EXP_UN_COMP: {
-
+		gen_uncomp_exp(expr);
 		break;
 	}
 	case EXP_UN_LOGNEG: {
-
+		gen_unlogneg_exp(expr);
 		break;
 	}
 	case EXP_BIN_ADD: {
-
+		gen_binadd_exp(expr);
 		break;
 	}
 	case EXP_BIN_NEG: {
-
+		gen_binsub_exp(expr);
 		break;
 	}
 	case EXP_BIN_MUL: {
-
+		gen_binmul_exp(expr);
 		break;
 	}
 	case EXP_BIN_DIV: {
-
+		gen_bindiv_exp(expr);
 		break;
 	}
 	default: fatal("Nothing to generate in return expression in function [%s]", prog->func_decl->name);
