@@ -91,12 +91,15 @@ Expression* parse_factor() {
 Expression* parse_term() {
 	Expression* expr_left = parse_factor();
 	while_spaces();
-	while (token.kind == TOKEN_MUL || token.kind == TOKEN_DIV) {
+	while (token.kind == TOKEN_MUL || token.kind == TOKEN_DIV || token.kind == TOKEN_MOD) {
 		Expression* expr = expression();
 		if (token.kind == TOKEN_MUL) {
 			expr->kind = EXP_BIN_MUL;
 		}
-		else expr->kind = EXP_BIN_DIV;
+		else if (token.kind == TOKEN_DIV) {
+			expr->kind = EXP_BIN_DIV;
+		}
+		else expr->kind = EXP_BIN_MOD;
 		consume_token();
 		while_spaces();
 		expr->exp_left = expr_left;
@@ -106,7 +109,7 @@ Expression* parse_term() {
 	return expr_left;
 }
 
-Expression* parse_notop() {
+Expression* parse_add() {
 	Expression* expr_left = parse_term();
 	while_spaces();
 	while (token.kind == TOKEN_ADD || token.kind == TOKEN_NEG) {
@@ -123,7 +126,103 @@ Expression* parse_notop() {
 	return expr_left;
 }
 
-Expression* parse_expr() {
+Expression* parse_shift() {
+	Expression* expr_left = parse_add();
+	while_spaces();
+	while (token.kind == TOKEN_SH_LEFT || token.kind == TOKEN_SH_RIGHT) {
+		Expression* expr = expression();
+		if (token.kind == TOKEN_SH_LEFT) {
+			expr->kind = EXP_BIN_SH_LEFT;
+		}
+		else expr->kind = EXP_BIN_SH_RIGHT;
+		consume_token();
+		while_spaces();
+		expr->exp_left = expr_left;
+		expr->exp_right = parse_add();
+		expr_left = expr;
+	}
+	return expr_left;
+}
+
+Expression* parse_bitand() {
+	Expression* expr_left = parse_shift();
+	while_spaces();
+	while (token.kind == TOKEN_AND) {
+		Expression* expr = expression();
+		expr->kind = EXP_BIN_BIT_AND;
+		consume_token();
+		while_spaces();
+		expr->exp_left = expr_left;
+		expr->exp_right = parse_shift();
+		expr_left = expr;
+	}
+	return expr_left;
+}
+
+Expression* parse_xor() {
+	Expression* expr_left = parse_bitand();
+	while_spaces();
+	while (token.kind == TOKEN_XOR) {
+		Expression* expr = expression();
+		expr->kind = EXP_BIN_XOR;
+		consume_token();
+		while_spaces();
+		expr->exp_left = expr_left;
+		expr->exp_right = parse_bitand();
+		expr_left = expr;
+	}
+	return expr_left;
+}
+
+
+Expression* parse_bitor() {
+	Expression* expr_left = parse_xor();
+	while_spaces();
+	while (token.kind == TOKEN_OR) {
+		Expression* expr = expression();
+		expr->kind = EXP_BIN_BIT_OR;
+		consume_token();
+		while_spaces();
+		expr->exp_left = expr_left;
+		expr->exp_right = parse_xor();
+		expr_left = expr;
+	}
+	return expr_left;
+}
+
+Expression* parse_equals() {
+	Expression* expr_left = parse_bitor();
+	while_spaces();
+	while (token.kind == TOKEN_EQL || token.kind == TOKEN_NEQL
+			|| token.kind == TOKEN_LESS || token.kind == TOKEN_LESS_EQL
+			|| token.kind == TOKEN_GREATER || token.kind == TOKEN_GREATER_EQL) {
+		Expression* expr = expression();
+		if (token.kind == TOKEN_EQL) {
+			expr->kind = EXP_BIN_EQL;
+		}
+		else if (token.kind == TOKEN_NEQL) {
+			expr->kind = EXP_BIN_NEQL;
+		}
+		else if (token.kind == TOKEN_LESS) {
+			expr->kind = EXP_BIN_LESS;
+		}
+		else if (token.kind == TOKEN_LESS_EQL) {
+			expr->kind = EXP_BIN_LESS_EQL;
+		}
+		else if (token.kind == TOKEN_GREATER) {
+			expr->kind = EXP_BIN_GREATER;
+		}
+		else expr->kind = EXP_BIN_GREATER_EQL;
+		consume_token();
+		while_spaces();
+		expr->exp_left = expr_left;
+		expr->exp_right = parse_bitor();
+		expr_left = expr;
+	}
+	return expr_left;
+}
+
+Expression* parse_notop() {
 	Expression* expr = expression();
 	if (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_NOT) {
 		expr->kind = EXP_UN_LOGNEG;
@@ -132,10 +231,41 @@ Expression* parse_expr() {
 		expr->exp_right = parse_expr();
 	}
 	else {
-		expr = parse_notop();		// could be errors (not shure) ???
-		while_spaces();
+		expr = parse_equals();		// could be errors (not shure) ???
+		while_spaces();				// could be errors (not shure) ???
 	}
 	return expr;
+}
+
+Expression* parse_logand() {
+	Expression* expr_left = parse_notop();
+	while_spaces();
+	while (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_AND) {
+		Expression* expr = expression();
+		expr->kind = EXP_BIN_AND;
+		consume_token();
+		while_spaces();
+		expr->exp_left = expr_left;
+		expr->exp_right = parse_notop();
+		expr_left = expr;
+	}
+	return expr_left;
+}
+
+Expression* parse_expr() {		// parse_logor
+	Expression* expr_left = parse_logand();
+	while_spaces();
+	while (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_OR) {
+		Expression* expr = expression();
+		expr->kind = EXP_BIN_OR;
+		consume_token();
+		while_spaces();
+		expr->exp_left = expr_left;
+		expr->exp_right = parse_logand();
+		expr_left = expr;
+		while_spaces();					// could be errors (not shure) ???
+	}
+	return expr_left;
 }
 
 Statement* parse_stmt() {

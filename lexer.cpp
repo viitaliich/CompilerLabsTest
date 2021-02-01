@@ -4,6 +4,8 @@ const char* last_keyword;
 typedef enum KeywordMod {
 	KEYWORD_DEF,
 	KEYWORD_NOT,	// logical negation (not)
+	KEYWORD_AND,
+	KEYWORD_OR,
 	KEYWORD_RET,
 }KeywordMod;
 
@@ -30,6 +32,18 @@ typedef enum TokenKind {
 	TOKEN_ADD,
 	TOKEN_MUL,
 	TOKEN_DIV,
+	TOKEN_EQL,
+	TOKEN_NEQL,
+	TOKEN_LESS_EQL,
+	TOKEN_LESS,
+	TOKEN_GREATER_EQL,
+	TOKEN_GREATER,
+	TOKEN_MOD,
+	TOKEN_AND,		// bitwise and, AND is a keyword
+	TOKEN_OR,		// bitwise or, OR is a keyword
+	TOKEN_XOR,		// bitwise xor
+	TOKEN_SH_LEFT,	
+	TOKEN_SH_RIGHT,	
 }TokenKind;
 
 typedef struct Token {
@@ -221,17 +235,41 @@ void scan_int() {
 
 bool is_keyword(const char* name) {
 	if (first_keyword <= name && name <= last_keyword){
-		switch ((uintptr_t(name) - uintptr_t(first_keyword)) / sizeof(name)) {
-		case KEYWORD_DEF:
+		
+		if (name == interns[KEYWORD_DEF].str) {
 			token.mod = KEYWORD_DEF;
-			break;
-		case KEYWORD_RET:
-			token.mod = KEYWORD_RET;
-			break;
-		case KEYWORD_NOT:
-			token.mod = KEYWORD_NOT;
-			break;
 		}
+		else if (name == interns[KEYWORD_RET].str) {
+			token.mod = KEYWORD_RET;
+		}
+		else if (name == interns[KEYWORD_NOT].str) {
+			token.mod = KEYWORD_NOT;
+		}
+		else if (name == interns[KEYWORD_AND].str) {
+			token.mod = KEYWORD_AND;
+		}
+		else if (name == interns[KEYWORD_OR].str) {
+			token.mod = KEYWORD_OR;
+		}
+		else fatal("Error in keyword [%s] mod detection", name);
+
+		//switch ((uintptr_t(name) - uintptr_t(first_keyword)) / sizeof(name)) {		// STR ???
+		//case KEYWORD_DEF:
+		//	token.mod = KEYWORD_DEF;
+		//	break;
+		//case KEYWORD_RET:
+		//	token.mod = KEYWORD_RET;
+		//	break;
+		//case KEYWORD_NOT:
+		//	token.mod = KEYWORD_NOT;
+		//	break;
+		//case KEYWORD_AND:
+		//	token.mod = KEYWORD_AND;
+		//	break;
+		//case KEYWORD_OR:
+		//	token.mod = KEYWORD_OR;
+		//	break;
+		//}
 		return true;
 	}
 	return false;
@@ -357,6 +395,76 @@ repeat:
 		break;
 	}
 
+	case '=': {
+		stream++;
+		if (*stream == '=') {
+			token.kind = TOKEN_EQL;
+			stream++;
+		}
+		break;
+	}
+
+	case '!': {
+		stream++;
+		if (*stream == '=') {
+			token.kind = TOKEN_NEQL;
+			stream++;
+		} else fatal("INVALID TOKEN AT LINE [%d], POSITION [%d].", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
+		break;
+	}
+
+	case '<': {
+		stream++;
+		if (*stream == '=') {
+			token.kind = TOKEN_LESS_EQL;
+			stream++;
+		}
+		else if (*stream == '<') {
+			token.kind = TOKEN_SH_LEFT;
+			stream++;
+		}
+		else token.kind = TOKEN_LESS;
+		break;
+	}
+
+	case '>': {
+		stream++;
+		if (*stream == '=') {
+			token.kind = TOKEN_GREATER_EQL;
+			stream++;
+		}
+		else if (*stream == '>') {
+			token.kind = TOKEN_SH_RIGHT;
+			stream++;
+		}
+		else token.kind = TOKEN_GREATER;
+		break;
+	}
+
+	case '%': {
+		token.kind = TOKEN_MOD;
+		stream++;
+		break;
+	}
+
+	case '&': {
+		token.kind = TOKEN_AND;
+		stream++;
+		break;
+	}
+
+	case '|': {
+		token.kind = TOKEN_OR;
+		stream++;
+		break;
+	}
+
+	case '^': {
+		token.kind = TOKEN_XOR;
+		stream++;
+		break;
+	}
+
 	case '\0': {
 		token.kind = TOKEN_EOF;
 		stream++;
@@ -388,10 +496,14 @@ void init_keywords() {
 	if (inited) return;
 	
 	// ??? swap lines ???
+	
+	// SEQUENCE MUST NOT BE COMPROMISED
 	first_keyword = keyword("def");
 
 	//char* pull_end = str_pull.end;	// for future checks. All keywords must be in the same block.
 	keyword("not");
+	keyword("and");
+	keyword("or");
 	//char* pull_end = str_pull.end;	// for future checks. All keywords must be in the same block.
 	last_keyword = keyword("return");
 	//assert(str_pull.end == pull_end);

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <fstream>
 #include <vector>
+#include <queue>
 #include <cstdlib>
 #include <cassert>
 #include <cstdarg>
