@@ -22,10 +22,13 @@ typedef enum ExprKind {
 	EXP_BIN_XOR,
 	EXP_BIN_SH_LEFT,
 	EXP_BIN_SH_RIGHT,
+	EXP_ASSIGN,
+	EXP_VAR,
 }ExprKind;
 
 typedef enum StmtKind {
-	RET_STMT,
+	STMT_RET,
+	STMT_EXP,
 }StmtKind;
 
 typedef struct Expression {
@@ -34,6 +37,7 @@ typedef struct Expression {
 		int int_val;
 		double float_val;
 		const char* str_val;
+		const char* var;
 		//double int_val;	// ???
 	};
 	Expression* exp_left;
@@ -46,9 +50,11 @@ typedef struct Statement {
 	StmtKind kind;
 }Statement;
 
+std::queue <Statement*> statement_queue;
+
 typedef struct FuncDecl {
 	const char* name;
-	Statement* stmt;
+	//Statement* stmt;
 }FuncDecl;
 
 typedef struct Program {

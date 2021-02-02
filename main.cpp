@@ -126,22 +126,6 @@ PAUSE\n");
 	return true;
 }
 
-void test_asm_code() {
-	int a;
-
-	__asm {
-		//main:
-		mov eax, 55
-		//ret
-
-		mov a, eax
-	}
-	printf("%d\n", a);
-	//cout << a << endl;
-
-	system("PAUSE");
-}
-
 int main(int argc, char* argv) {
 
 	// TO DO: manual path input

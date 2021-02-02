@@ -65,6 +65,13 @@ Expression* parse_factor() {
 		expr->exp_right = parse_factor();
 		break;
 	}
+	case TOKEN_NAME: {
+		expr->var = token.name;
+		expr->kind = EXP_VAR;
+		consume_token();
+		while_spaces();
+		break;
+	}
 	case TOKEN_INT:
 	case TOKEN_BIN:
 	case TOKEN_OCT:
@@ -222,6 +229,32 @@ Expression* parse_equals() {
 	return expr_left;
 }
 
+// Could be errors ???
+Expression* parse_assign() {
+	if (token.kind == TOKEN_NAME) {
+		Expression* expr = expression();
+		expr->kind = EXP_ASSIGN;
+		expr->exp_left->var = token.name;
+
+		TempToken* temp_token = temp_token_crt(token, stream);
+		
+		consume_token();
+		while_spaces();
+		if (token.kind = TOKEN_ASSIGN) {
+			consume_token();
+			while_spaces();
+			expr->exp_right = parse_expr();
+		}
+		else {
+			stream = temp_token->stream;
+			token = temp_token->token;
+			expr = parse_equals();
+		}
+		return expr;
+	}
+	else return parse_equals();
+}
+
 Expression* parse_notop() {
 	Expression* expr = expression();
 	if (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_NOT) {
@@ -269,13 +302,21 @@ Expression* parse_expr() {		// parse_logor
 }
 
 Statement* parse_stmt() {
+	Statement* stmt = statement();
 	parse_spaces();
 	if (space_count_new <= space_count_old) fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
-	expected_keyword(KEYWORD_RET);		
-	while_spaces();
+	if (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_RET) {
+		stmt->kind = STMT_RET;
+		consume_token();
+		while_spaces();
+	}
+	else {
+		stmt->kind = STMT_EXP;
+	}
 	Expression* expr = parse_expr();
+	stmt->expr = expr;
 	while_spaces();
-	return statement(expr);				// TO DO: pay atencion, do like in expression parsing
+	return stmt;				
 }
 
 FuncDecl* parse_func_decl() {
@@ -290,11 +331,15 @@ FuncDecl* parse_func_decl() {
 	while_spaces();
 	expected_token(TOKEN_COLON);
 	while_spaces();
-	expected_token(TOKEN_NEW_LINE);
-	Statement* statement = parse_stmt();
+	while (token.kind != TOKEN_EOF) {
+		expected_token(TOKEN_NEW_LINE);
+		Statement* statement = parse_stmt();
+		statement_queue.push(statement);
+		// update_scope
+	}
 	while_spaces();
 	if (!is_kind(TOKEN_EOF)) fatal("UNEXPECTED TOKEN INSTEAD EOF AT LINE [%d], POSITION [%d].", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
-	return func_decl(name, statement);
+	return func_decl(name);
 }
 
 Program* parse_prog() {

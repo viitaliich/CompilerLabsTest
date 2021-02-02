@@ -32,6 +32,7 @@ typedef enum TokenKind {
 	TOKEN_ADD,
 	TOKEN_MUL,
 	TOKEN_DIV,
+
 	TOKEN_EQL,
 	TOKEN_NEQL,
 	TOKEN_LESS_EQL,
@@ -44,6 +45,8 @@ typedef enum TokenKind {
 	TOKEN_XOR,		// bitwise xor
 	TOKEN_SH_LEFT,	
 	TOKEN_SH_RIGHT,	
+
+	TOKEN_ASSIGN,
 }TokenKind;
 
 typedef struct Token {
@@ -58,6 +61,25 @@ typedef struct Token {
 		const char* name;
 	};
 } Token;
+
+typedef struct TempToken {
+	const char* stream;
+	Token token;
+};
+
+TempToken* temp_token_crt(Token token, const char* stream) {
+	TempToken* temp_token = (TempToken*)xmalloc(sizeof(TempToken), "Can't allocate memory for TempToken");
+	temp_token->stream = stream;
+	temp_token->token.start = token.start;
+	temp_token->token.end = token.end;
+	temp_token->token.kind = token.kind;
+	temp_token->token.mod = token.mod;
+	temp_token->token.int_val = token.int_val;
+	temp_token->token.float_val = token.float_val;
+	temp_token->token.str_val = token.str_val;
+	temp_token->token.name = token.name;
+	return temp_token;
+}
 
 Token token;			// global token, corresponds to the current token.
 const char* stream;		// global variable responsible for source string
@@ -400,6 +422,9 @@ repeat:
 		if (*stream == '=') {
 			token.kind = TOKEN_EQL;
 			stream++;
+		}
+		else {
+			token.kind = TOKEN_ASSIGN;
 		}
 		break;
 	}

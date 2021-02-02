@@ -24,7 +24,7 @@ void gen_int_exp(Expression* expr) {
 
 void gen_float_exp(Expression* expr) {
 	expr->int_val = (int)expr->float_val;			// float to int
-	buf = buf_printf(buf, "\tmov ebx, %d\n", prog->func_decl->stmt->expr->int_val);
+	buf = buf_printf(buf, "\tmov ebx, %d\n", expr->int_val);
 }
 
 void gen_exp(Expression* expr);
@@ -356,10 +356,10 @@ void gen_exp(Expression* expr) {
 
 }
 
-void gen_stmt() {
-	if (prog->func_decl->stmt->kind == RET_STMT &&
-		prog->func_decl->stmt->expr != nullptr) {
-		gen_exp(prog->func_decl->stmt->expr);
+void gen_stmt(Statement* stmt) {
+	if (stmt->kind == STMT_RET &&
+		stmt->expr != nullptr) {
+		gen_exp(stmt->expr);
 		buf = buf_printf(buf, "\tret\n\nmain ENDP\n\n");
 
 	}
@@ -420,12 +420,19 @@ NumbToStr\tENDP\n\n");
 
 }
 
+void gen_stmt_queue() {
+	while (!statement_queue.empty()) {
+		gen_stmt(statement_queue.front());
+		statement_queue.pop();
+	}
+}
+
 void gen_func_decl() {
 	buf = buf_printf(buf, "%s PROC\n", prog->func_decl->name);
 	
-	if (prog->func_decl->stmt == nullptr) fatal("No statement to generate in function [%s]", prog->func_decl->name);
-	gen_stmt();
-
+	if(statement_queue.size() == 0) fatal("No statement to generate in function [%s]", prog->func_decl->name);
+	gen_stmt_queue();
+	
 	gen_NumbToStr();
 }
 
