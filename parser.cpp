@@ -1,6 +1,14 @@
 uint16_t space_count_old = 0;
 uint16_t space_count_new = 0;
 
+typedef enum {
+	BLOCK_FUNC_STMT,
+	BLOCK_STMT_STMT,
+	BLOCK_FUNC_FUNC,
+} SpacesBlock;
+
+SpacesBlock spaces_block;
+
 Program* prog = nullptr;
 
 const char* parse_name() {
@@ -304,7 +312,9 @@ Expression* parse_expr() {		// parse_logor
 Statement* parse_stmt() {
 	Statement* stmt = statement();
 	parse_spaces();
-	if (space_count_new <= space_count_old) fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
+	if ((spaces_block == BLOCK_FUNC_STMT && space_count_new <= space_count_old) ||
+		(spaces_block == BLOCK_STMT_STMT && space_count_new != space_count_old)) 
+		fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 	if (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_RET) {
 		stmt->kind = STMT_RET;
 		consume_token();
@@ -331,6 +341,13 @@ FuncDecl* parse_func_decl() {
 	while_spaces();
 	expected_token(TOKEN_COLON);
 	while_spaces();
+	expected_token(TOKEN_NEW_LINE);
+	// block marker for proper parce of spaces
+	spaces_block = BLOCK_FUNC_STMT;
+	Statement* statement = parse_stmt();
+	statement_queue.push(statement);
+	spaces_block = BLOCK_STMT_STMT;
+
 	while (token.kind != TOKEN_EOF) {
 		expected_token(TOKEN_NEW_LINE);
 		Statement* statement = parse_stmt();

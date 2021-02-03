@@ -4,6 +4,15 @@ size_t buf_cap = 0;
 size_t label_index = 0;
 std::queue <size_t> label_indices;
 
+int stack_index = -4;
+
+typedef struct Variable {
+	const char* name;
+	int stack_index;
+};
+std::vector <Variable> var_map;
+std::vector <Variable>::iterator it;
+
 char* buf_printf(char* buf, const char* format, ...) {
 	va_list args;
 	va_start(args, format);
@@ -254,6 +263,30 @@ void gen_bin_shright_exp(Expression* expr) {
 \tshr ebx, cl\n");
 }
 
+void gen_assign_exp(Expression* expr) {
+	// int a = expression
+	gen_exp(expr->exp_right);
+	it = std::find(var_map.begin(), var_map.end(), expr->exp_right->var);
+	// if found
+	if (it != var_map.end()) {
+		buf = buf_printf(buf, "\tmov [ebp + %d], ebx\n", var_map[it - var_map.begin()].stack_index);
+	}
+	else {
+		buf = buf_printf(buf, "\tpush ebx\n");
+		var_map.push_back({ expr->exp_left->var, stack_index });
+		stack_index -= 4;
+	}
+}
+
+void gen_ref_exp(Expression* expr) {
+	it = std::find(var_map.begin(), var_map.end(), expr->exp_right->var);
+	if (it != var_map.end()) {
+		buf = buf_printf(buf, "\tmov ebx, [ebp + %d]\n", var_map[it - var_map.begin()].stack_index);
+	}
+	else {
+		fatal("Variable [%s] not declared", expr->var);
+	}
+}
 
 void gen_exp(Expression* expr) {
 	switch(expr->kind){
@@ -349,6 +382,14 @@ void gen_exp(Expression* expr) {
 		gen_bin_shright_exp(expr);
 		break;
 	}
+	case EXP_ASSIGN: {
+		gen_assign_exp(expr);
+		break;
+	}
+	case EXP_VAR: {
+		gen_ref_exp(expr);
+		break;
+	}
 
 
 	default: fatal("Nothing to generate in return expression in function [%s]", prog->func_decl->name);
@@ -356,16 +397,17 @@ void gen_exp(Expression* expr) {
 
 }
 
+// TO DO: differense between STMT_RET and STMT_EXP
 void gen_stmt(Statement* stmt) {
-	if (stmt->kind == STMT_RET &&
-		stmt->expr != nullptr) {
+	if (stmt->kind == STMT_RET) {
 		gen_exp(stmt->expr);
-		buf = buf_printf(buf, "\tret\n\nmain ENDP\n\n");
-
 	}
-	else {
-		fatal("No expression to generate in function [%s]", prog->func_decl->name);
+	else if (stmt->kind == STMT_EXP) {
+		gen_exp(stmt->expr);
+		//buf = buf_printf(buf, "\tmov ebx, 0\n");
 	}
+	else fatal("No expression to generate in function [%s]", prog->func_decl->name);
+	
 }
 
 void gen_data() {
@@ -425,12 +467,18 @@ void gen_stmt_queue() {
 		gen_stmt(statement_queue.front());
 		statement_queue.pop();
 	}
+	buf = buf_printf(buf, "\tmov esp, ebp\n\
+\tpop ebp\n\
+\tret\n\
+\nmain ENDP\n\n");		// function epilogue
 }
 
 void gen_func_decl() {
 	buf = buf_printf(buf, "%s PROC\n", prog->func_decl->name);
 	
 	if(statement_queue.size() == 0) fatal("No statement to generate in function [%s]", prog->func_decl->name);
+	buf = buf_printf(buf, "\tpush ebp\n\tmov ebp, esp");	// function prologue
+
 	gen_stmt_queue();
 	
 	gen_NumbToStr();
