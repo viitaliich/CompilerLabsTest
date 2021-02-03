@@ -241,14 +241,17 @@ Expression* parse_equals() {
 Expression* parse_assign() {
 	if (token.kind == TOKEN_NAME) {
 		Expression* expr = expression();
-		expr->kind = EXP_ASSIGN;
-		expr->exp_left->var = token.name;
+		//expr->kind = EXP_ASSIGN;
+		//expr->exp_left->var = token.name;
 
 		TempToken* temp_token = temp_token_crt(token, stream);
 		
 		consume_token();
 		while_spaces();
-		if (token.kind = TOKEN_ASSIGN) {
+		if (token.kind == TOKEN_ASSIGN) {
+			expr->kind = EXP_ASSIGN;
+			expr->exp_left = expression();
+			expr->exp_left->var = temp_token->token.name;
 			consume_token();
 			while_spaces();
 			expr->exp_right = parse_expr();
@@ -272,7 +275,7 @@ Expression* parse_notop() {
 		expr->exp_right = parse_expr();
 	}
 	else {
-		expr = parse_equals();		// could be errors (not shure) ???
+		expr = parse_assign();		// could be errors (not shure) ???		parse_equals
 		while_spaces();				// could be errors (not shure) ???
 	}
 	return expr;

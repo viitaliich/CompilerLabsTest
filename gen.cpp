@@ -11,7 +11,15 @@ typedef struct Variable {
 	int stack_index;
 };
 std::vector <Variable> var_map;
-std::vector <Variable>::iterator it;
+//std::vector <Variable>::iterator it;
+size_t var_map_find(const char* val) {
+	for (size_t i = 0; i < var_map.size(); i++) {
+		if (var_map[i].name == val) {
+			return i;
+		}
+	}
+	return INT_MAX;
+}
 
 char* buf_printf(char* buf, const char* format, ...) {
 	va_list args;
@@ -266,10 +274,13 @@ void gen_bin_shright_exp(Expression* expr) {
 void gen_assign_exp(Expression* expr) {
 	// int a = expression
 	gen_exp(expr->exp_right);
-	it = std::find(var_map.begin(), var_map.end(), expr->exp_right->var);
+	size_t it = var_map_find(expr->exp_left->var);
+	//it = std::find(var_map.begin(), var_map.end(), expr->exp_right->var);
 	// if found
-	if (it != var_map.end()) {
-		buf = buf_printf(buf, "\tmov [ebp + %d], ebx\n", var_map[it - var_map.begin()].stack_index);
+	if(it != INT_MAX){
+	//if (it != var_map.end()) {
+		buf = buf_printf(buf, "\tmov [ebp + %d], ebx\n", var_map[it].stack_index);
+		//buf = buf_printf(buf, "\tmov [ebp + %d], ebx\n", var_map[it - var_map.begin()].stack_index);
 	}
 	else {
 		buf = buf_printf(buf, "\tpush ebx\n");
@@ -279,9 +290,12 @@ void gen_assign_exp(Expression* expr) {
 }
 
 void gen_ref_exp(Expression* expr) {
-	it = std::find(var_map.begin(), var_map.end(), expr->exp_right->var);
-	if (it != var_map.end()) {
-		buf = buf_printf(buf, "\tmov ebx, [ebp + %d]\n", var_map[it - var_map.begin()].stack_index);
+	size_t it = var_map_find(expr->var);	// expr->exp_left->var
+	//it = std::find(var_map.begin(), var_map.end(), expr->exp_right->var);
+	if (it != INT_MAX) {
+	//if (it != var_map.end()) {
+		//buf = buf_printf(buf, "\tmov ebx, [ebp + %d]\n", var_map[it - var_map.begin()].stack_index);
+		buf = buf_printf(buf, "\tmov ebx, [ebp + %d]\n", var_map[it].stack_index);
 	}
 	else {
 		fatal("Variable [%s] not declared", expr->var);
@@ -404,7 +418,7 @@ void gen_stmt(Statement* stmt) {
 	}
 	else if (stmt->kind == STMT_EXP) {
 		gen_exp(stmt->expr);
-		//buf = buf_printf(buf, "\tmov ebx, 0\n");
+		buf = buf_printf(buf, "\tmov ebx, 0\n");
 	}
 	else fatal("No expression to generate in function [%s]", prog->func_decl->name);
 	
@@ -477,7 +491,7 @@ void gen_func_decl() {
 	buf = buf_printf(buf, "%s PROC\n", prog->func_decl->name);
 	
 	if(statement_queue.size() == 0) fatal("No statement to generate in function [%s]", prog->func_decl->name);
-	buf = buf_printf(buf, "\tpush ebp\n\tmov ebp, esp");	// function prologue
+	buf = buf_printf(buf, "\tpush ebp\n\tmov ebp, esp\n");	// function prologue
 
 	gen_stmt_queue();
 	
