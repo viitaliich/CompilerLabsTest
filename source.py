@@ -1,2 +1,3 @@
 def main():
-	return 7
+	b = 2
+	return b
