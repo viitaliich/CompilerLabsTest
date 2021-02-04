@@ -1,3 +1,3 @@
 def main():
-	b = 2
+	b = 3/0
 	return b

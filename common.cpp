@@ -1,6 +1,7 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define PULL_BLOCK_SIZE 1024
 
+// fatal error with following program termination
 void fatal(const char* message, ...) {
 	va_list args;
 	va_start(args, message);
@@ -10,6 +11,7 @@ void fatal(const char* message, ...) {
 	exit(1);
 }
 
+// extended malloc
 void* xmalloc(size_t bytes, const char* fail_mes) {
 	void* ptr = malloc(bytes);
 	if (!ptr) {
@@ -28,15 +30,14 @@ void* xrealloc(void* ptr, size_t num_bytes) {
 	return ptr;
 }
 
-typedef std::vector<char*> Blocks;
+typedef std::vector<char*> Blocks;		// pull blocks
 
 typedef struct Pull {
 	char* ptr;		// start of free mem
 	char* end;
-	//Blocks blocks;
 }Pull;
 
-Pull str_pull;
+Pull str_pull;					// string pull
 Blocks str_pull_blocks;			// Blocks are related to Pull
 
 void pull_append(Pull* pull, size_t min_size) {
@@ -56,6 +57,7 @@ void* pull_alloc(Pull* pull, size_t min_size) {
 	return ptr;
 }
 
+// string interning mechanism
 typedef struct InterStr {
 	const char* str;
 	size_t len;
@@ -67,17 +69,15 @@ Interns interns;
 const char* str_intern_range(const char* start, const char* end) {
 	size_t len = end - start;
 	for (size_t i = 0; i < interns.size(); i++) {
-		if (interns[i].len == len && strncmp(interns[i].str, start, len) == 0) {	// ??? strcmp
+		if (interns[i].len == len && strncmp(interns[i].str, start, len) == 0) {
 			return interns[i].str;
 		}
 	}
 	
 	char* str = (char*)pull_alloc(&str_pull, len + 1);
-	//char* str = (char*)xmalloc(len + 1, "Can't allocate memory for strintg in str_intern_range");
 	memcpy(str, start, len);
 	str[len] = 0;
 	
-	//interns.push_back({ start, len });
 	interns.push_back({ str, len });
 	return str;
 }

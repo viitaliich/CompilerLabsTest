@@ -1,11 +1,12 @@
-const char* first_keyword;
-const char* last_keyword;
+const char* first_keyword;		// pointer to the first keyword in the intern_buffer
+const char* last_keyword;		// pointer to the last keyword in the intern_buffer
 
+// Kind of keyword
 typedef enum KeywordMod {
 	KEYWORD_DEF,
 	KEYWORD_NOT,	// logical negation (not)
-	KEYWORD_AND,
-	KEYWORD_OR,
+	KEYWORD_AND,	// logical AND (and)
+	KEYWORD_OR,		// logical OR (or)
 	KEYWORD_RET,
 }KeywordMod;
 
@@ -24,29 +25,28 @@ typedef enum TokenKind {
 	TOKEN_FLOAT,
 	TOKEN_STR,
 	TOKEN_NEW_LINE,
-	TOKEN_EOF,
+	TOKEN_EOF,		// end of file
 
 	TOKEN_COMP,		// bitwise complement
-	TOKEN_NEG,
-	//TOKEN_LOGNEG,		// logical negation (not) is keyword
+	TOKEN_NEG,		
 	TOKEN_ADD,
 	TOKEN_MUL,
 	TOKEN_DIV,
 
 	TOKEN_EQL,
 	TOKEN_NEQL,
-	TOKEN_LESS_EQL,
-	TOKEN_LESS,
-	TOKEN_GREATER_EQL,
-	TOKEN_GREATER,
-	TOKEN_MOD,
-	TOKEN_AND,		// bitwise and, AND is a keyword
-	TOKEN_OR,		// bitwise or, OR is a keyword
-	TOKEN_XOR,		// bitwise xor
-	TOKEN_SH_LEFT,	
-	TOKEN_SH_RIGHT,	
+	TOKEN_LESS_EQL,		// <=
+	TOKEN_LESS,			// <
+	TOKEN_GREATER_EQL,	// >=
+	TOKEN_GREATER,		// >
+	TOKEN_MOD,			// %
+	TOKEN_AND,		// bitwise and (&)
+	TOKEN_OR,		// bitwise or (|)
+	TOKEN_XOR,		// bitwise xor (^)
+	TOKEN_SH_LEFT,		// <<
+	TOKEN_SH_RIGHT,		// >>
 
-	TOKEN_ASSIGN,
+	TOKEN_ASSIGN,		// =
 }TokenKind;
 
 typedef struct Token {
@@ -55,10 +55,10 @@ typedef struct Token {
 	const char* start;
 	const char* end;
 	union {
-		int int_val;
-		double float_val;
-		const char* str_val;
-		const char* name;
+		int int_val;			// if int
+		double float_val;		// if float
+		const char* str_val;	// if string
+		const char* name;		// if variable
 	};
 } Token;
 
@@ -67,6 +67,7 @@ typedef struct TempToken {
 	Token token;
 };
 
+// Creation of temporary token
 TempToken* temp_token_crt(Token token, const char* stream) {
 	TempToken* temp_token = (TempToken*)xmalloc(sizeof(TempToken), "Can't allocate memory for TempToken");
 	temp_token->stream = stream;
@@ -83,8 +84,8 @@ TempToken* temp_token_crt(Token token, const char* stream) {
 
 Token token;			// global token, corresponds to the current token.
 const char* stream;		// global variable responsible for source string
-const char* line_start;
-int src_line;
+const char* line_start;	// line of code
+int src_line;			// cursor position on the line
 
 void scan_str() {
 	const char close_quote = *stream;
@@ -97,7 +98,7 @@ void scan_str() {
 			fatal("STR TOKEN [%s] AT LINE [%d], POSITION [%d] CAN'T CONTAIN NEWLINE SYM.", token.start, src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 		}
 		// TO DO: fot what is this if previous comment?
-		else if (val == '\\'){
+		/*else if (val == '\\'){
 			stream++;
 			switch (*stream){
 			case 'n':
@@ -124,10 +125,10 @@ void scan_str() {
 			default:
 				fatal("INVALID ESCAPE SYMBOL [\\%c] AT LINE [%d], POSITION [%d]", *stream, src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 			}
-		}
+		}*/
 		str.push_back(val);
 		stream++;
-		}
+	}
 	if(*stream == close_quote){
 		stream++;
 	}
@@ -179,9 +180,6 @@ void scan_int() {
 			if (*stream == NULL) fatal("[0x] is not allowed");
 
 		}
-		/*else {
-			fatal("UNEXPECTED SYMBOL [%c] AT LINE [%d], POSITION [%d]. MUST BE [b], [o] or [x]", *stream, src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
-		}*/
 	}
 	int value = 0;
 	for (;;) {
@@ -256,7 +254,7 @@ void scan_int() {
 }
 
 bool is_keyword(const char* name) {
-	if (first_keyword <= name && name <= last_keyword){
+	if (first_keyword <= name && name <= last_keyword){		// if name lays in bounds [first..last], it's keyword
 		
 		if (name == interns[KEYWORD_DEF].str) {
 			token.mod = KEYWORD_DEF;
@@ -274,24 +272,7 @@ bool is_keyword(const char* name) {
 			token.mod = KEYWORD_OR;
 		}
 		else fatal("Error in keyword [%s] mod detection", name);
-
-		//switch ((uintptr_t(name) - uintptr_t(first_keyword)) / sizeof(name)) {		// STR ???
-		//case KEYWORD_DEF:
-		//	token.mod = KEYWORD_DEF;
-		//	break;
-		//case KEYWORD_RET:
-		//	token.mod = KEYWORD_RET;
-		//	break;
-		//case KEYWORD_NOT:
-		//	token.mod = KEYWORD_NOT;
-		//	break;
-		//case KEYWORD_AND:
-		//	token.mod = KEYWORD_AND;
-		//	break;
-		//case KEYWORD_OR:
-		//	token.mod = KEYWORD_OR;
-		//	break;
-		//}
+		
 		return true;
 	}
 	return false;
@@ -335,7 +316,7 @@ repeat:
 			stream++;
 		}
 		token.name = str_intern_range(token.start, stream);
-		token.kind = is_keyword(token.name) ? TOKEN_KEYWORD : TOKEN_NAME;		// ??? change is_keyword checking
+		token.kind = is_keyword(token.name) ? TOKEN_KEYWORD : TOKEN_NAME;
 		break;
 	}
 
@@ -507,31 +488,20 @@ repeat:
 	token.end = stream;
 }
 
-typedef std::vector<const char*> Keywords;
-Keywords keywords;
-
 const char* keyword(const char* str) {
 	const char* keyword = str_intern(str);
-	keywords.push_back(keyword);		// ??? don't need this
 	return keyword;
 }
 
 void init_keywords() {
 	static bool inited;
-	if (inited) return;
-	
-	// ??? swap lines ???
-	
-	// SEQUENCE MUST NOT BE COMPROMISED
-	first_keyword = keyword("def");
-
-	//char* pull_end = str_pull.end;	// for future checks. All keywords must be in the same block.
+	if (inited) return;		// do nothing if keywords are already initialized
+	// Sequence must be the same as in "KeywordMod" enum
+	first_keyword = keyword("def");		// put keyword into interning buffer fo future fast access and checks
 	keyword("not");
 	keyword("and");
 	keyword("or");
-	//char* pull_end = str_pull.end;	// for future checks. All keywords must be in the same block.
 	last_keyword = keyword("return");
-	//assert(str_pull.end == pull_end);
 	inited = true;
 }
 
@@ -539,15 +509,16 @@ void init_stream(const char* str) {
 	init_keywords();
 
 	stream = str;
-	src_line = 1;
-	line_start = stream;
-	consume_token();
+	src_line = 1;			// number of current line of code
+	line_start = stream;	// position on line
+	consume_token();		
 }
 
 bool is_kind(TokenKind kind) {
 	return token.kind == kind;
 }
 
+// Keyword kind checking
 bool is_mod(KeywordMod mod) {
 	return token.mod == mod;
 }
@@ -576,4 +547,3 @@ bool expected_token(TokenKind kind) {
 		}
 	}
 }
-

@@ -1,5 +1,3 @@
-// BUG: no empty lines between statements allowed
-
 #pragma once
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
@@ -84,9 +82,9 @@ bool compile_py_file(const char* path){
 	const char* str = read_file(path);
 	if (!str) return false;
 	
-	init_stream(str);
-	parse_file();
-	code_gen();
+	init_stream(str);		// Initialize keywords and fetch first token
+	parse_file();			
+	code_gen();				
 
 	const char* asm_code = buf;
 	const char* asm_path = replace_ext(path, "asm");
@@ -129,7 +127,6 @@ PAUSE\n");
 }
 
 int main(int argc, char* argv) {
-
 	// TO DO: manual path input
 	const char* path = "source.py";			// path to source code
 	if (!compile_py_file(path)) {
@@ -138,16 +135,12 @@ int main(int argc, char* argv) {
 	}
 	printf("Compilation succeeded.\n");
 	
-	// TO DO: auto generation pathes
-	if (!gen_bat_file("source.bat")) {
+	// Generate BAT file which launches generated code.
+	if (!gen_bat_file("source.bat")) {				// TO DO: auto generation pathes
 		printf("BAT file generation failed.\n");
 		return 1;
 	}
 	system("source.bat");
-
-	// TEST ASM COSE
-	//test_asm_code();
-	// TEST ASM CODE
 
 	return 0;
 }

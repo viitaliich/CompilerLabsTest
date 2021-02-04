@@ -22,6 +22,7 @@ const char* parse_name() {
 
 void parse_spaces() {
 	// TO DO: could be errors in count methodology. Number of new lines (\n) is not taking into account
+	// BUG: no empty lines between statements allowed
 	space_count_old = space_count_new;	// save previous number 
 	space_count_new = 0;
 	while (is_kind(TOKEN_SPACE) || is_kind(TOKEN_TAB)) {
@@ -48,7 +49,6 @@ Expression* parse_factor() {
 	const char* expr_start = token.start;		// for error place detection
 	Expression* expr = expression();
 	switch (token.kind) {
-	// TO DO: check correctness of code generation stage of TOKEN_LPAREN
 	case TOKEN_LPAREN: {
 		consume_token();
 		while_spaces();
@@ -56,7 +56,7 @@ Expression* parse_factor() {
 		if (token.kind != TOKEN_RPAREN) 
 			fatal("NO CLOSE PARENTHESE AT LINE [%d], POSITION [%d].", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 		consume_token();
-		while_spaces();		// do we need this here?
+		while_spaces();
 		break;
 	}
 	case TOKEN_COMP: {
@@ -86,12 +86,12 @@ Expression* parse_factor() {
 	case TOKEN_HEX:
 		expr->int_val = token.int_val;
 		expr->kind = EXP_INT;
-		consume_token();		// do we need this here, this is the end ???
+		consume_token();		
 		break;
 	case TOKEN_FLOAT:
 		expr->float_val = token.float_val;
 		expr->kind = EXP_FLOAT;
-		consume_token();		// do we need this here, this is the end ???
+		consume_token();		
 		break;
 	case TOKEN_STR:
 		fatal("STRING EXPRESSION ISN'T ALLOWED. LINE [%d], POSITION [%d].", src_line, (size_t)((uintptr_t)expr_start - (uintptr_t)line_start + 1));
@@ -99,7 +99,6 @@ Expression* parse_factor() {
 	default:
 		fatal("INVALID EXPRESSION AT LINE [%d], POSITION [%d].", src_line, (size_t)((uintptr_t)expr_start - (uintptr_t)line_start + 1));
 	}
-
 	return expr;
 }
 
@@ -241,11 +240,8 @@ Expression* parse_equals() {
 Expression* parse_assign() {
 	if (token.kind == TOKEN_NAME) {
 		Expression* expr = expression();
-		//expr->kind = EXP_ASSIGN;
-		//expr->exp_left->var = token.name;
-
-		TempToken* temp_token = temp_token_crt(token, stream);
 		
+		TempToken* temp_token = temp_token_crt(token, stream);
 		consume_token();
 		while_spaces();
 		if (token.kind == TOKEN_ASSIGN) {
@@ -275,8 +271,8 @@ Expression* parse_notop() {
 		expr->exp_right = parse_expr();
 	}
 	else {
-		expr = parse_assign();		// could be errors (not shure) ???		parse_equals
-		while_spaces();				// could be errors (not shure) ???
+		expr = parse_assign();		
+		while_spaces();	
 	}
 	return expr;
 }
@@ -296,7 +292,7 @@ Expression* parse_logand() {
 	return expr_left;
 }
 
-Expression* parse_expr() {		// parse_logor
+Expression* parse_expr() {		// second name - "parse_logor"
 	Expression* expr_left = parse_logand();
 	while_spaces();
 	while (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_OR) {
@@ -307,7 +303,7 @@ Expression* parse_expr() {		// parse_logor
 		expr->exp_left = expr_left;
 		expr->exp_right = parse_logand();
 		expr_left = expr;
-		while_spaces();					// could be errors (not shure) ???
+		while_spaces();	
 	}
 	return expr_left;
 }
@@ -355,7 +351,6 @@ FuncDecl* parse_func_decl() {
 		expected_token(TOKEN_NEW_LINE);
 		Statement* statement = parse_stmt();
 		statement_queue.push(statement);
-		// update_scope
 	}
 	while_spaces();
 	if (!is_kind(TOKEN_EOF)) fatal("UNEXPECTED TOKEN INSTEAD EOF AT LINE [%d], POSITION [%d].", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
@@ -368,6 +363,6 @@ Program* parse_prog() {
 }
 
 void parse_file() {
-	// "prog" is not declared here because this variable is used in "code generation" stage
+	// "prog" is used in "code generation" stage
 	prog = parse_prog();
 }

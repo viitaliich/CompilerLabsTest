@@ -25,7 +25,20 @@ start:
 	invoke  ExitProcess, 0
 
 main PROC
-	mov ebx, 7
+	push ebp
+	mov ebp, esp
+	mov ebx, 4
+	mov eax, ebx
+	cdq
+	mov ebx, 2
+	mov ecx, ebx
+	idiv ecx
+	mov ebx, eax
+	push ebx
+	mov ebx, 0
+	mov ebx, [ebp + -4]
+	mov esp, ebp
+	pop ebp
 	ret
 
 main ENDP

@@ -38,11 +38,9 @@ typedef struct Expression {
 		double float_val;
 		const char* str_val;
 		const char* var;
-		//double int_val;	// ???
 	};
 	Expression* exp_left;
 	Expression* exp_right;
-
 }Expression;
 
 typedef struct Statement {
@@ -54,7 +52,6 @@ std::queue <Statement*> statement_queue;
 
 typedef struct FuncDecl {
 	const char* name;
-	//Statement* stmt;
 }FuncDecl;
 
 typedef struct Program {

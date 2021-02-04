@@ -1,0 +1,33 @@
+AST & Grammar
+
+NOTE: 
+	in Python spaces, tabulation, new line, ... are tokens. Also their quantity is essential. They are not indicated in Grammar for readability.
+
+Grammar:
+	<program> 	::= <function>
+	<function> 	::= "def" name "(" ")" ":" { <statement> }
+	<statement> ::= "return" <exp | <exp> 
+	<exp> 		::= <log_and> { "or" <log_and> }
+	<log_and> 	::= <not> { "and" <not_op> }
+	<not_op> 	::= "not" <exp> | <assign>
+	<assign> 	::= <name> "=" <exp> | <equals> 
+	<equals> 	::= <bit_or> { ("==" | "!=" | "<" | ">" | "<=" | ">=") <bit_or> }
+	<bit_or> 	::= <xor> { "|" <xor> }
+	<xor> 		::= <bit_and> { "^" <bit_and> }
+	<bit_and> 	::= <shift> { "&" <shift> }
+	<shift>		::= <add> { ("<<" | ">>") <add> }
+	<add> 		::= <term> { ("+" | "-") <term> }
+	<term> 		::= <factor> { ("*" | "/" | "%") <factor> }
+	<factor> 	::= "(" <exp> ")" | <unary_op> <factor> | name | int | float | str
+	<unary_op> 	::= ~" | "-"
+
+AST:
+	program 		= 	Program(function)
+	Function 		= 	Function(string, statement list)
+	statement list 	= 	Return(exp) |
+						Exp(exp)
+	exp 			= 	Assign(string, exp) | 
+						Var(string) | 
+						UnOp(unary_operator, exp) | 
+						BinOp(binary_operator, left_exp, right_exp) | 
+						Constant(int, float, str)

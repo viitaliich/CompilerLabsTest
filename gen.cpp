@@ -1,17 +1,19 @@
-char* buf = nullptr;
-size_t buf_len = 0;
-size_t buf_cap = 0;
-size_t label_index = 0;
-std::queue <size_t> label_indices;
+char* buf = nullptr;		// string buffer
+size_t buf_len = 0;			// current length of string
+size_t buf_cap = 0;			// possible length of string
+size_t label_index = 0;		// index for distinguishing of labels in assembly code
+std::queue <size_t> label_indices;		// queue to keep label's indices for future use
 
-int stack_index = -4;
+int stack_index = -4;		// offset from EBP
 
+// to keep variables in the variable map
 typedef struct Variable {
 	const char* name;
 	int stack_index;
 };
 std::vector <Variable> var_map;
 //std::vector <Variable>::iterator it;
+// find variable in a variable map
 size_t var_map_find(const char* val) {
 	for (size_t i = 0; i < var_map.size(); i++) {
 		if (var_map[i].name == val) {
@@ -24,7 +26,6 @@ size_t var_map_find(const char* val) {
 char* buf_printf(char* buf, const char* format, ...) {
 	va_list args;
 	va_start(args, format);
-	// ??? may be errors (but may be not)
 	if (buf_cap - buf_len < sizeof(args)) {
 		(char*)xrealloc(buf, 2 * buf_cap + sizeof(args));
 		buf_cap = buf_cap * 2 + sizeof(args);
@@ -91,7 +92,7 @@ void gen_binmul_exp(Expression* expr) {
 }
 
 void gen_bindiv_exp(Expression* expr) {
-	// TO DO: division on zero warning		???
+	if (expr->exp_right->int_val == 0) fatal("DIVISION ON ZERO ISN'T ALLOWED");
 	gen_exp(expr->exp_left);
 	buf = buf_printf(buf, "\tmov eax, ebx\n\
 \tcdq\n");
@@ -208,7 +209,7 @@ void gen_bin_greater_eql_exp(Expression* expr) {
 \tsetge bl\n");
 }
 
-// TO DO: bug - it gives neg output when one of operandds is negative. SOLVED, but could be more ???
+// POTENTIAL BUG: neg output when one of operandds is negative	???
 void gen_bin_mod_exp(Expression* expr) {
 	gen_exp(expr->exp_left);
 	buf = buf_printf(buf, "\tmov eax, ebx\n\
@@ -271,16 +272,13 @@ void gen_bin_shright_exp(Expression* expr) {
 \tshr ebx, cl\n");
 }
 
+// variable declaration with assignment or redefinition of assigned variable
 void gen_assign_exp(Expression* expr) {
-	// int a = expression
 	gen_exp(expr->exp_right);
 	size_t it = var_map_find(expr->exp_left->var);
-	//it = std::find(var_map.begin(), var_map.end(), expr->exp_right->var);
 	// if found
 	if(it != INT_MAX){
-	//if (it != var_map.end()) {
 		buf = buf_printf(buf, "\tmov [ebp + %d], ebx\n", var_map[it].stack_index);
-		//buf = buf_printf(buf, "\tmov [ebp + %d], ebx\n", var_map[it - var_map.begin()].stack_index);
 	}
 	else {
 		buf = buf_printf(buf, "\tpush ebx\n");
@@ -290,11 +288,8 @@ void gen_assign_exp(Expression* expr) {
 }
 
 void gen_ref_exp(Expression* expr) {
-	size_t it = var_map_find(expr->var);	// expr->exp_left->var
-	//it = std::find(var_map.begin(), var_map.end(), expr->exp_right->var);
+	size_t it = var_map_find(expr->var);	// expr->exp_left->var	???
 	if (it != INT_MAX) {
-	//if (it != var_map.end()) {
-		//buf = buf_printf(buf, "\tmov ebx, [ebp + %d]\n", var_map[it - var_map.begin()].stack_index);
 		buf = buf_printf(buf, "\tmov ebx, [ebp + %d]\n", var_map[it].stack_index);
 	}
 	else {
@@ -404,14 +399,10 @@ void gen_exp(Expression* expr) {
 		gen_ref_exp(expr);
 		break;
 	}
-
-
 	default: fatal("Nothing to generate in return expression in function [%s]", prog->func_decl->name);
 	}
-
 }
 
-// TO DO: differense between STMT_RET and STMT_EXP
 void gen_stmt(Statement* stmt) {
 	if (stmt->kind == STMT_RET) {
 		gen_exp(stmt->expr);
@@ -421,7 +412,6 @@ void gen_stmt(Statement* stmt) {
 		buf = buf_printf(buf, "\tmov ebx, 0\n");
 	}
 	else fatal("No expression to generate in function [%s]", prog->func_decl->name);
-	
 }
 
 void gen_data() {
@@ -437,6 +427,7 @@ void gen_code() {
 \tinvoke  ExitProcess, 0\n\n", prog->func_decl->name);
 }
 
+// transform number from register EBX to string presantation for output on console
 void gen_NumbToStr(){
 	buf = buf_printf(buf, "NumbToStr PROC uses ebx x:DWORD,buffer:DWORD\n\n\
 \tmov\tecx, buffer\n\
@@ -473,7 +464,6 @@ stp:\n\
 NumbToStr\tENDP\n\n");
 
 	buf = buf_printf(buf, "END\tstart\n");
-
 }
 
 void gen_stmt_queue() {
@@ -491,7 +481,7 @@ void gen_func_decl() {
 	buf = buf_printf(buf, "%s PROC\n", prog->func_decl->name);
 	
 	if(statement_queue.size() == 0) fatal("No statement to generate in function [%s]", prog->func_decl->name);
-	buf = buf_printf(buf, "\tpush ebp\n\tmov ebp, esp\n");	// function prologue
+	buf = buf_printf(buf, "\tpush ebp\n\tmov ebp, esp\n");			// function prologue
 
 	gen_stmt_queue();
 	
@@ -511,7 +501,7 @@ includelib  c:\\masm32\\lib\\masm32.lib\n\n");
 }
 
 void gen_prog() {
-	gen_includes();
+	gen_includes();		
 	
 	if (prog->func_decl == nullptr) fatal("No function declaration to generate");
 
@@ -525,11 +515,11 @@ void gen_prog() {
 }
 
 void code_gen() {
-	buf_cap = 2048;		// TO DO: #define 2048		???
+	buf_cap = 2048;		// buffer for generated code, can be extended if needed 	// TO DO: #define 2048		???
 	buf = (char*)xmalloc(buf_cap, "Can't allocate buffer for generated code");
 	
 	if (prog == nullptr) fatal("Nothing to generate");
 	gen_prog();
 
-	printf("%s", buf);
+	printf("%s", buf);		// print put generated assembly
 }
