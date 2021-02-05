@@ -51,10 +51,6 @@ typedef enum TokenKind {
 
 	TOKEN_ASSIGN,		// =
 
-	TOKEN_IF,
-	TOKEN_ELSE,
-	TOKEN_ELIF,
-
 }TokenKind;
 
 typedef struct Token {

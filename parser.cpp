@@ -376,30 +376,33 @@ Statement* parse_stmt() {
 		while_spaces();
 		//change_block();
 		spaces_block = BLOCK_CENTRAL;
-	}
-	else if (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_ELSE) {
-		stmt->kind = STMT_ELSE;
-		consume_token();
-		while_spaces();
-		expected_token(TOKEN_COLON);
-		while_spaces();
-		expected_token(TOKEN_NEW_LINE);
-		parse_spaces();
-		set_block();
-		if (spaces_block == BLOCK_RIGHT) {
-			Statement* statement = parse_stmt();
-			stmt->stmt_queue->push(statement);
-		}
-		else fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 
-		while (spaces_block == BLOCK_CENTRAL) {
-			Statement* statement = parse_stmt();
-			stmt->stmt_queue->push(statement);
+		//assert(token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_ELSE);
+		if (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_ELSE) {
+			consume_token();
+			while_spaces();
+			expected_token(TOKEN_COLON);
+			while_spaces();
+			expected_token(TOKEN_NEW_LINE);
+			parse_spaces();
+			set_block();
+			if (spaces_block == BLOCK_RIGHT) {
+				Statement* statement = parse_stmt();
+				stmt->stmt_queue_two->push(statement);
+			}
+			else fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
+
+			while (spaces_block == BLOCK_CENTRAL) {
+				Statement* statement = parse_stmt();
+				stmt->stmt_queue_two->push(statement);
+			}
+			while_spaces();
+			//change_block();
+			spaces_block = BLOCK_CENTRAL;
 		}
-		while_spaces();
-		//change_block();
-		spaces_block = BLOCK_CENTRAL;
+
 	}
+	
 	else {
 		stmt->kind = STMT_EXP;
 		Expression* expr = parse_expr();

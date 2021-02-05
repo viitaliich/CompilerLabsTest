@@ -23,6 +23,7 @@ FuncDecl* func_decl(const char* name) {
 Statement* statement() {
 	Statement* stmt = (Statement*)ast_alloc(sizeof(Statement));
 	stmt->stmt_queue = new StatementQueue();
+	stmt->stmt_queue_two = new StatementQueue();
 	return stmt;
 }
 

@@ -2,7 +2,9 @@ char* buf = nullptr;		// string buffer
 size_t buf_len = 0;			// current length of string
 size_t buf_cap = 0;			// possible length of string
 size_t label_index = 0;		// index for distinguishing of labels in assembly code
-std::queue <size_t> label_indices;		// queue to keep label's indices for future use
+//std::queue <size_t> label_indices;		// queue to keep label's indices for future use
+
+typedef std::queue <size_t> LabelIndices;		// queue to keep label's indices for future use
 
 int stack_index = -4;		// offset from EBP
 
@@ -103,44 +105,51 @@ void gen_bindiv_exp(Expression* expr) {
 }
 
 void gen_bin_and_exp(Expression* expr) {
+	LabelIndices* label_indices = new LabelIndices();
+
 	gen_exp(expr->exp_left);
 	buf = buf_printf(buf, "\tcmp ebx, 0\n\
 \tjne _label%d\n", label_index);
-	label_indices.push(label_index);
+	label_indices->push(label_index);
 	label_index++;
 	buf = buf_printf(buf, "\tjmp _label%d\n", label_index);
-	label_indices.push(label_index);
+	label_indices->push(label_index);
 	label_index++;
-	buf = buf_printf(buf, "_label%d:\n", label_indices.front());
-	label_indices.pop();
+	buf = buf_printf(buf, "_label%d:\n", label_indices->front());
+	label_indices->pop();
 	gen_exp(expr->exp_right);
 	buf = buf_printf(buf,
 		"\tcmp ebx, 0\n\
 \tmov ebx, 0\n\
 \tsetne bl\n\
-_label%d:\n", label_indices.front());
-	label_indices.pop();
+_label%d:\n", label_indices->front());
+	label_indices->pop();
+	delete label_indices;
 }
 
 void gen_bin_or_exp(Expression* expr) {
+	LabelIndices* label_indices = new LabelIndices();
+
 	gen_exp(expr->exp_left);
 	buf = buf_printf(buf, "\tcmp ebx, 0\n\
 \tje _label%d\n", label_index);
-	label_indices.push(label_index);
+	label_indices->push(label_index);
 	label_index++;
 	buf = buf_printf(buf, "\tmov ebx, 1\n\
 \tjmp _label%d\n", label_index);
-	label_indices.push(label_index);
+	label_indices->push(label_index);
 	label_index++;
-	buf = buf_printf(buf, "_label%d:\n", label_indices.front());
-	label_indices.pop();
+	buf = buf_printf(buf, "_label%d:\n", label_indices->front());
+	label_indices->pop();
 	gen_exp(expr->exp_right);
 	buf = buf_printf(buf,
 		"\tcmp ebx, 0\n\
 \tmov ebx, 0\n\
 \tsetne bl\n\
-_label%d:\n", label_indices.front());
-	label_indices.pop();
+_label%d:\n", label_indices->front());
+	label_indices->pop();
+
+	delete label_indices;
 }
 
 void gen_bin_eql_exp(Expression* expr) {
@@ -211,6 +220,8 @@ void gen_bin_greater_eql_exp(Expression* expr) {
 
 // POTENTIAL BUG: neg output when one of operandds is negative	???
 void gen_bin_mod_exp(Expression* expr) {
+	LabelIndices* label_indices = new LabelIndices();
+
 	gen_exp(expr->exp_left);
 	buf = buf_printf(buf, "\tmov eax, ebx\n\
 \tcdq\n");
@@ -220,11 +231,13 @@ void gen_bin_mod_exp(Expression* expr) {
 	buf = buf_printf(buf, "\tmov ebx, edx\n");
 	buf = buf_printf(buf, "\tcmp eax, 0\n\
 \tjge _label%d\n", label_index);
-	label_indices.push(label_index);
+	label_indices->push(label_index);
 	label_index++;
 	buf = buf_printf(buf, "\tneg ebx\n");
-	buf = buf_printf(buf, "_label%d:\n", label_indices.front());
-	label_indices.pop();
+	buf = buf_printf(buf, "_label%d:\n", label_indices->front());
+	label_indices->pop();
+
+	delete label_indices;
 }
 
 void gen_bin_bitand_exp(Expression* expr) {
@@ -407,6 +420,8 @@ void gen_exp(Expression* expr) {
 
 void gen_stmt_queue(StatementQueue* stmt_queue);
 void gen_stmt(Statement* stmt) {
+	LabelIndices* label_indices = new LabelIndices();
+
 	if (stmt->kind == STMT_RET) {
 		gen_exp(stmt->expr);
 	}
@@ -418,21 +433,22 @@ void gen_stmt(Statement* stmt) {
 		gen_exp(stmt->expr);
 		buf = buf_printf(buf, "\tcmp ebx, 0\n");
 		buf = buf_printf(buf, "\tje _label%d\n", label_index);
-		label_indices.push(label_index);
+		label_indices->push(label_index);
 		label_index++;
-		gen_stmt_queue(stmt->stmt_queue); // statement
+		gen_stmt_queue(stmt->stmt_queue); // statement if
 		buf = buf_printf(buf, "\tjmp _label%d\n", label_index);
-		label_indices.push(label_index);
+		label_indices->push(label_index);
 		label_index++;
-		buf = buf_printf(buf, "_label%d:\n", label_indices.front());
-		label_indices.pop();
-		// statement
-
-		buf = buf_printf(buf, "_label%d:\n", label_indices.front());
-		label_indices.pop();
+		buf = buf_printf(buf, "_label%d:\n", label_indices->front());
+		label_indices->pop();
+		gen_stmt_queue(stmt->stmt_queue_two); // statement else
+		buf = buf_printf(buf, "_label%d:\n", label_indices->front());
+		label_indices->pop();
 	}
 
 	else fatal("No expression to generate in function [%s]", prog->func_decl->name);
+
+	delete label_indices;
 }
 
 void gen_data() {

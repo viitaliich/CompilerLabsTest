@@ -55,6 +55,7 @@ typedef struct Statement {
 	Statement* stmt;
 	StmtKind kind;
 	std::queue <Statement*> *stmt_queue;
+	std::queue <Statement*>* stmt_queue_two;
 }Statement;
 
 typedef std::queue <Statement*> StatementQueue;

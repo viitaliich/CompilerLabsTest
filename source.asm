@@ -43,17 +43,17 @@ main PROC
 	cmp eax, 0
 	jge _label1
 	neg ebx
-_label0:
+_label1:
 	mov [ebp + -4], ebx
 	mov ebx, 0
 	jmp _label2
-_label1:
+_label0:
 _label2:
-	mov ebx, [ebp + -4]
+	mov ebx, 9
 	push ebx
-	mov ebx, 1
+	mov ebx, [ebp + -4]
 	pop ecx
-	add ebx, ecx
+	sub ebx, ecx
 	mov esp, ebp
 	pop ebp
 	ret
