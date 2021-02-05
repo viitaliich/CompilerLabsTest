@@ -29,6 +29,7 @@ typedef enum ExprKind {
 typedef enum StmtKind {
 	STMT_RET,
 	STMT_EXP,
+	STMT_IF,
 }StmtKind;
 
 typedef struct Expression {
@@ -45,6 +46,7 @@ typedef struct Expression {
 
 typedef struct Statement {
 	Expression* expr;
+	Statement* stmt;
 	StmtKind kind;
 }Statement;
 

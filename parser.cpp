@@ -2,9 +2,10 @@ uint16_t space_count_old = 0;
 uint16_t space_count_new = 0;
 
 typedef enum {
-	BLOCK_FUNC_STMT,
-	BLOCK_STMT_STMT,
-	BLOCK_FUNC_FUNC,
+	BLOCK_RIGHT,
+	BLOCK_CENTRAL,
+	BLOCK_LEFT,
+	BLOCK_TERMINATE,
 } SpacesBlock;
 
 SpacesBlock spaces_block;
@@ -308,23 +309,102 @@ Expression* parse_expr() {		// second name - "parse_logor"
 	return expr_left;
 }
 
+void set_block() {
+	if (space_count_new > space_count_old) {
+		spaces_block = BLOCK_RIGHT;
+	} 
+	else if (space_count_new == space_count_old) {
+		spaces_block = BLOCK_CENTRAL;
+	}
+	else if (space_count_new < space_count_old) {
+		spaces_block = BLOCK_LEFT;
+	}
+	else fatal("CAN'T SET BLOCK");
+}
+
+void change_block() {
+	// BUG: new line is empty, block changes anyway
+	if (token.kind == TOKEN_NEW_LINE) {
+		consume_token();
+		parse_spaces();
+		set_block();
+	}
+	else if (token.kind == TOKEN_EOF) {
+		spaces_block = BLOCK_LEFT;
+	}
+	else fatal("ERROR");		// TO DO: make it more specific
+}
+
 Statement* parse_stmt() {
 	Statement* stmt = statement();
-	parse_spaces();
-	if ((spaces_block == BLOCK_FUNC_STMT && space_count_new <= space_count_old) ||
-		(spaces_block == BLOCK_STMT_STMT && space_count_new != space_count_old)) 
-		fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
+	// ???
+	//set_block();
+	// TO DO: make changes
+	//if ((spaces_block == BLOCK_RIGHT && space_count_new <= space_count_old) ||
+	//	(spaces_block == BLOCK_CENTRAL && space_count_new != space_count_old)) 
+	//	fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 	if (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_RET) {
 		stmt->kind = STMT_RET;
 		consume_token();
 		while_spaces();
+		Expression* expr = parse_expr();
+		stmt->expr = expr;
+		while_spaces();
+	}
+	else if (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_IF) {
+		stmt->kind = STMT_IF;
+		consume_token();
+		while_spaces();
+		stmt->expr = parse_expr();
+		//Expression* expr = parse_expr();
+		while_spaces();
+		expected_token(TOKEN_COLON);
+		while_spaces();
+		expected_token(TOKEN_NEW_LINE);
+		parse_spaces();
+		set_block();
+		if (spaces_block == BLOCK_RIGHT) {
+			//Statement* statement = parse_stmt();
+			stmt->stmt = parse_stmt();
+			//statement_queue.push(statement);
+			statement_queue.push(stmt->stmt);
+		}
+		else fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
+		
+		while (spaces_block == BLOCK_CENTRAL) {
+			//Statement* statement = parse_stmt();
+			stmt->stmt = parse_stmt();
+			//statement_queue.push(statement);
+			statement_queue.push(stmt->stmt);
+		}
+		while_spaces();
+		//change_block();
+		spaces_block = BLOCK_CENTRAL;
 	}
 	else {
 		stmt->kind = STMT_EXP;
+		Expression* expr = parse_expr();
+		stmt->expr = expr;
+		while_spaces();
+		change_block();
 	}
-	Expression* expr = parse_expr();
-	stmt->expr = expr;
-	while_spaces();
+
+	if (token.kind == TOKEN_EOF) {
+		spaces_block = BLOCK_TERMINATE;
+	}
+	
+	// BUG: new line is empty, block changes anyway
+	//if (token.kind == TOKEN_NEW_LINE) {
+	//	consume_token();
+	//	parse_spaces();
+	//	set_block();
+	//} 
+	//else if (token.kind == TOKEN_EOF) {
+	//	spaces_block = BLOCK_LEFT;
+	//}
+	//else fatal("ERROR");		// TO DO: make it more specific
+	
+
 	return stmt;				
 }
 
@@ -342,13 +422,19 @@ FuncDecl* parse_func_decl() {
 	while_spaces();
 	expected_token(TOKEN_NEW_LINE);
 	// block marker for proper parce of spaces
-	spaces_block = BLOCK_FUNC_STMT;
-	Statement* statement = parse_stmt();
-	statement_queue.push(statement);
-	spaces_block = BLOCK_STMT_STMT;
+	//spaces_block = BLOCK_RIGHT;
+	parse_spaces();
+	set_block();
+	if (spaces_block == BLOCK_RIGHT) {
+		Statement* statement = parse_stmt();
+		statement_queue.push(statement);
+	}
+	else fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
+	//spaces_block = BLOCK_CENTRAL;
 
-	while (token.kind != TOKEN_EOF) {
-		expected_token(TOKEN_NEW_LINE);
+	//while (token.kind != TOKEN_EOF) {
+	while (spaces_block == BLOCK_CENTRAL) {
+		//expected_token(TOKEN_NEW_LINE);
 		Statement* statement = parse_stmt();
 		statement_queue.push(statement);
 	}

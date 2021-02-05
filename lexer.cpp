@@ -7,6 +7,9 @@ typedef enum KeywordMod {
 	KEYWORD_NOT,	// logical negation (not)
 	KEYWORD_AND,	// logical AND (and)
 	KEYWORD_OR,		// logical OR (or)
+	KEYWORD_IF,
+	KEYWORD_ELSE,
+	KEYWORD_ELIF,
 	KEYWORD_RET,
 }KeywordMod;
 
@@ -47,6 +50,11 @@ typedef enum TokenKind {
 	TOKEN_SH_RIGHT,		// >>
 
 	TOKEN_ASSIGN,		// =
+
+	TOKEN_IF,
+	TOKEN_ELSE,
+	TOKEN_ELIF,
+
 }TokenKind;
 
 typedef struct Token {
@@ -270,6 +278,15 @@ bool is_keyword(const char* name) {
 		}
 		else if (name == interns[KEYWORD_OR].str) {
 			token.mod = KEYWORD_OR;
+		}
+		else if (name == interns[KEYWORD_IF].str) {
+			token.mod = KEYWORD_IF;
+		}
+		else if (name == interns[KEYWORD_ELSE].str) {
+			token.mod = KEYWORD_ELSE;
+		}
+		else if (name == interns[KEYWORD_ELIF].str) {
+			token.mod = KEYWORD_ELIF;
 		}
 		else fatal("Error in keyword [%s] mod detection", name);
 		
@@ -501,6 +518,9 @@ void init_keywords() {
 	keyword("not");
 	keyword("and");
 	keyword("or");
+	keyword("if");
+	keyword("else");
+	keyword("elif");
 	last_keyword = keyword("return");
 	inited = true;
 }

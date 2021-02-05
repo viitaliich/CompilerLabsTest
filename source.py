@@ -1,3 +1,5 @@
 def main():
-	b = 3/0
+	b = 5
+	if b:
+		b = 6
 	return b

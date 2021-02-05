@@ -23,7 +23,7 @@ Grammar:
 
 AST:
 	program 		= 	Program(function)
-	Function 		= 	Function(string, statement list)
+	function 		= 	Function(string, statement list)
 	statement list 	= 	Return(exp) |
 						Exp(exp)
 	exp 			= 	Assign(string, exp) | 

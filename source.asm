@@ -27,16 +27,10 @@ start:
 main PROC
 	push ebp
 	mov ebp, esp
-	mov ebx, 4
-	mov eax, ebx
-	cdq
-	mov ebx, 2
-	mov ecx, ebx
-	idiv ecx
-	mov ebx, eax
+	mov ebx, 5
 	push ebx
 	mov ebx, 0
-	mov ebx, [ebp + -4]
+	mov ebx, 2
 	mov esp, ebp
 	pop ebp
 	ret
