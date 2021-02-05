@@ -411,6 +411,23 @@ void gen_stmt(Statement* stmt) {
 		gen_exp(stmt->expr);
 		buf = buf_printf(buf, "\tmov ebx, 0\n");
 	}
+	else if (stmt->kind == STMT_IF) {
+		gen_exp(stmt->expr);
+		buf = buf_printf(buf, "\tcmp ebx, 0\n");
+		buf = buf_printf(buf, "\tje _label%d", label_index);
+		label_indices.push(label_index);
+		label_index++;
+		// statement
+		buf = buf_printf(buf, "\tjmp _label%d", label_index);
+		label_indices.push(label_index);
+		label_index++;
+		buf = buf_printf(buf, "_label%d", label_indices.front());
+		label_indices.pop();
+		buf = buf_printf(buf, "_label%d", label_indices.front());
+		label_indices.pop();
+
+
+	}
 	else fatal("No expression to generate in function [%s]", prog->func_decl->name);
 }
 

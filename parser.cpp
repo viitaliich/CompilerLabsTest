@@ -365,17 +365,19 @@ Statement* parse_stmt() {
 		set_block();
 		if (spaces_block == BLOCK_RIGHT) {
 			//Statement* statement = parse_stmt();
-			stmt->stmt = parse_stmt();
+			Statement* statement = parse_stmt();
 			//statement_queue.push(statement);
-			statement_queue.push(stmt->stmt);
+			statement_queue.push(statement);
 		}
+		// stmt->stmt.kind = STMT_INTERMIDIATE;
+		// ...
 		else fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 		
 		while (spaces_block == BLOCK_CENTRAL) {
 			//Statement* statement = parse_stmt();
-			stmt->stmt = parse_stmt();
+			Statement* statement = parse_stmt();
 			//statement_queue.push(statement);
-			statement_queue.push(stmt->stmt);
+			statement_queue.push(statement);
 		}
 		while_spaces();
 		//change_block();
