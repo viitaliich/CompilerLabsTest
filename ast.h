@@ -30,7 +30,9 @@ typedef enum StmtKind {
 	STMT_RET,
 	STMT_EXP,
 	STMT_IF,
+	STMT_ELSE,
 }StmtKind;
+
 
 typedef struct Expression {
 	ExprKind kind;
@@ -44,16 +46,26 @@ typedef struct Expression {
 	Expression* exp_right;
 }Expression;
 
+
+
+//typedef std::queue <Statement*> StatementQueue;
+
 typedef struct Statement {
 	Expression* expr;
 	Statement* stmt;
 	StmtKind kind;
+	std::queue <Statement*> *stmt_queue;
 }Statement;
 
-std::queue <Statement*> statement_queue;
+typedef std::queue <Statement*> StatementQueue;
+
+
+//std::queue <Statement*> statement_queue;
 
 typedef struct FuncDecl {
 	const char* name;
+	//StatementQueue* stmt_queue;
+	std::queue <Statement*>* stmt_queue;
 }FuncDecl;
 
 typedef struct Program {

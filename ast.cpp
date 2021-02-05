@@ -16,11 +16,13 @@ Program* program(FuncDecl* func_decl) {
 FuncDecl* func_decl(const char* name) {
 	FuncDecl* f_decl = (FuncDecl*)ast_alloc(sizeof(FuncDecl));
 	f_decl->name = name;
+	f_decl->stmt_queue = new StatementQueue();
 	return f_decl;
 }
 
 Statement* statement() {
 	Statement* stmt = (Statement*)ast_alloc(sizeof(Statement));
+	stmt->stmt_queue = new StatementQueue();
 	return stmt;
 }
 

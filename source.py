@@ -1,5 +1,5 @@
 def main():
-	b = 5
-	if b:
-		b = 6
-	return b
+	a = 8
+	if 0:
+		a = a%10
+	return a+1

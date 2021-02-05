@@ -364,20 +364,37 @@ Statement* parse_stmt() {
 		parse_spaces();
 		set_block();
 		if (spaces_block == BLOCK_RIGHT) {
-			//Statement* statement = parse_stmt();
 			Statement* statement = parse_stmt();
-			//statement_queue.push(statement);
-			statement_queue.push(statement);
+			stmt->stmt_queue->push(statement);
 		}
-		// stmt->stmt.kind = STMT_INTERMIDIATE;
-		// ...
 		else fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 		
 		while (spaces_block == BLOCK_CENTRAL) {
-			//Statement* statement = parse_stmt();
 			Statement* statement = parse_stmt();
-			//statement_queue.push(statement);
-			statement_queue.push(statement);
+			stmt->stmt_queue->push(statement);
+		}
+		while_spaces();
+		//change_block();
+		spaces_block = BLOCK_CENTRAL;
+	}
+	else if (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_ELSE) {
+		stmt->kind = STMT_ELSE;
+		consume_token();
+		while_spaces();
+		expected_token(TOKEN_COLON);
+		while_spaces();
+		expected_token(TOKEN_NEW_LINE);
+		parse_spaces();
+		set_block();
+		if (spaces_block == BLOCK_RIGHT) {
+			Statement* statement = parse_stmt();
+			stmt->stmt_queue->push(statement);
+		}
+		else fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
+
+		while (spaces_block == BLOCK_CENTRAL) {
+			Statement* statement = parse_stmt();
+			stmt->stmt_queue->push(statement);
 		}
 		while_spaces();
 		//change_block();
@@ -415,6 +432,7 @@ FuncDecl* parse_func_decl() {
 	expected_keyword(KEYWORD_DEF);
 	while_spaces();
 	const char* name = parse_name();
+	FuncDecl* f_decl = func_decl(name);
 	while_spaces();
 	expected_token(TOKEN_LPAREN);
 	while_spaces();
@@ -429,7 +447,9 @@ FuncDecl* parse_func_decl() {
 	set_block();
 	if (spaces_block == BLOCK_RIGHT) {
 		Statement* statement = parse_stmt();
-		statement_queue.push(statement);
+		f_decl->stmt_queue->push(statement);
+		//statement_queue.push(statement);
+		
 	}
 	else fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 	//spaces_block = BLOCK_CENTRAL;
@@ -438,11 +458,12 @@ FuncDecl* parse_func_decl() {
 	while (spaces_block == BLOCK_CENTRAL) {
 		//expected_token(TOKEN_NEW_LINE);
 		Statement* statement = parse_stmt();
-		statement_queue.push(statement);
+		f_decl->stmt_queue->push(statement);
+		//statement_queue.push(statement);
 	}
 	while_spaces();
 	if (!is_kind(TOKEN_EOF)) fatal("UNEXPECTED TOKEN INSTEAD EOF AT LINE [%d], POSITION [%d].", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
-	return func_decl(name);
+	return f_decl;
 }
 
 Program* parse_prog() {

@@ -403,6 +403,9 @@ void gen_exp(Expression* expr) {
 	}
 }
 
+// TO DO: own queue for indeices for each gen
+
+void gen_stmt_queue(StatementQueue* stmt_queue);
 void gen_stmt(Statement* stmt) {
 	if (stmt->kind == STMT_RET) {
 		gen_exp(stmt->expr);
@@ -414,20 +417,21 @@ void gen_stmt(Statement* stmt) {
 	else if (stmt->kind == STMT_IF) {
 		gen_exp(stmt->expr);
 		buf = buf_printf(buf, "\tcmp ebx, 0\n");
-		buf = buf_printf(buf, "\tje _label%d", label_index);
+		buf = buf_printf(buf, "\tje _label%d\n", label_index);
 		label_indices.push(label_index);
 		label_index++;
+		gen_stmt_queue(stmt->stmt_queue); // statement
+		buf = buf_printf(buf, "\tjmp _label%d\n", label_index);
+		label_indices.push(label_index);
+		label_index++;
+		buf = buf_printf(buf, "_label%d:\n", label_indices.front());
+		label_indices.pop();
 		// statement
-		buf = buf_printf(buf, "\tjmp _label%d", label_index);
-		label_indices.push(label_index);
-		label_index++;
-		buf = buf_printf(buf, "_label%d", label_indices.front());
-		label_indices.pop();
-		buf = buf_printf(buf, "_label%d", label_indices.front());
-		label_indices.pop();
 
-
+		buf = buf_printf(buf, "_label%d:\n", label_indices.front());
+		label_indices.pop();
 	}
+
 	else fatal("No expression to generate in function [%s]", prog->func_decl->name);
 }
 
@@ -483,24 +487,26 @@ NumbToStr\tENDP\n\n");
 	buf = buf_printf(buf, "END\tstart\n");
 }
 
-void gen_stmt_queue() {
-	while (!statement_queue.empty()) {
-		gen_stmt(statement_queue.front());
-		statement_queue.pop();
+void gen_stmt_queue(StatementQueue* stmt_queue) {
+	while (!stmt_queue->empty()) {
+		gen_stmt(stmt_queue->front());
+		stmt_queue->pop();
 	}
-	buf = buf_printf(buf, "\tmov esp, ebp\n\
-\tpop ebp\n\
-\tret\n\
-\nmain ENDP\n\n");		// function epilogue
+
 }
 
 void gen_func_decl() {
 	buf = buf_printf(buf, "%s PROC\n", prog->func_decl->name);
 	
-	if(statement_queue.size() == 0) fatal("No statement to generate in function [%s]", prog->func_decl->name);
+	if(prog->func_decl->stmt_queue->size() == 0) fatal("No statement to generate in function [%s]", prog->func_decl->name);
 	buf = buf_printf(buf, "\tpush ebp\n\tmov ebp, esp\n");			// function prologue
 
-	gen_stmt_queue();
+	gen_stmt_queue(prog->func_decl->stmt_queue);
+
+	buf = buf_printf(buf, "\tmov esp, ebp\n\
+\tpop ebp\n\
+\tret\n\
+\nmain ENDP\n\n");		// function epilogue
 	
 	gen_NumbToStr();
 }

@@ -27,10 +27,33 @@ start:
 main PROC
 	push ebp
 	mov ebp, esp
-	mov ebx, 5
+	mov ebx, 8
 	push ebx
 	mov ebx, 0
-	mov ebx, 2
+	mov ebx, 0
+	cmp ebx, 0
+	je _label0
+	mov ebx, [ebp + -4]
+	mov eax, ebx
+	cdq
+	mov ebx, 10
+	mov ecx, ebx
+	idiv ecx
+	mov ebx, edx
+	cmp eax, 0
+	jge _label1
+	neg ebx
+_label0:
+	mov [ebp + -4], ebx
+	mov ebx, 0
+	jmp _label2
+_label1:
+_label2:
+	mov ebx, [ebp + -4]
+	push ebx
+	mov ebx, 1
+	pop ecx
+	add ebx, ecx
 	mov esp, ebp
 	pop ebp
 	ret
