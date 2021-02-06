@@ -1,5 +1,9 @@
 def main():
-	a = 8
-	if 0:
-		a = a%10
-	return a-9
+	a = 1
+	b = 0
+	if a:
+		b = 1
+	else:
+		if b:
+			b = 2
+	return b

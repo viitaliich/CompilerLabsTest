@@ -310,6 +310,27 @@ void gen_ref_exp(Expression* expr) {
 	}
 }
 
+void gen_ternary(Expression* expr) {
+	LabelIndices* label_indices = new LabelIndices();
+
+	gen_exp(expr->exp_right);
+	buf = buf_printf(buf, "\tcmp ebx, 0\n");
+	buf = buf_printf(buf, "\tje _label%d\n", label_index);
+	label_indices->push(label_index);
+	label_index++;
+	gen_exp(expr->exp_left);	// expr if
+	buf = buf_printf(buf, "\tjmp _label%d\n", label_index);
+	label_indices->push(label_index);
+	label_index++;
+	buf = buf_printf(buf, "_label%d:\n", label_indices->front());
+	label_indices->pop();
+	gen_exp(expr->exp_else);	// expr else
+	buf = buf_printf(buf, "_label%d:\n", label_indices->front());
+	label_indices->pop();
+
+	delete label_indices;
+}
+
 void gen_exp(Expression* expr) {
 	switch(expr->kind){
 	case EXP_INT: {
@@ -410,6 +431,10 @@ void gen_exp(Expression* expr) {
 	}
 	case EXP_VAR: {
 		gen_ref_exp(expr);
+		break;
+	}
+	case EXP_TERNARY: {
+		gen_ternary(expr);
 		break;
 	}
 	default: fatal("Nothing to generate in return expression in function [%s]", prog->func_decl->name);

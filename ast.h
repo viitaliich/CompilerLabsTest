@@ -24,6 +24,7 @@ typedef enum ExprKind {
 	EXP_BIN_SH_RIGHT,
 	EXP_ASSIGN,
 	EXP_VAR,
+	EXP_TERNARY,
 }ExprKind;
 
 typedef enum StmtKind {
@@ -44,6 +45,7 @@ typedef struct Expression {
 	};
 	Expression* exp_left;
 	Expression* exp_right;
+	Expression* exp_else;
 }Expression;
 
 

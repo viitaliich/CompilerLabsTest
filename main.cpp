@@ -126,6 +126,13 @@ PAUSE\n");
 	return true;
 }
 
+//int main() {
+//	int a = 1 ? 2 ? 3 : 4 : 5;
+//	int b = 0 ? 2 ? 3 : 4 : 5;
+//	printf("%d", a*b);
+//	return 0;
+//}
+
 int main(int argc, char* argv) {
 	// TO DO: manual path input
 	const char* path = "source.py";			// path to source code

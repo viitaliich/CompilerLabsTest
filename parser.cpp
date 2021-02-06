@@ -293,7 +293,7 @@ Expression* parse_logand() {
 	return expr_left;
 }
 
-Expression* parse_expr() {		// second name - "parse_logor"
+Expression* parse_logor() {
 	Expression* expr_left = parse_logand();
 	while_spaces();
 	while (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_OR) {
@@ -304,8 +304,39 @@ Expression* parse_expr() {		// second name - "parse_logor"
 		expr->exp_left = expr_left;
 		expr->exp_right = parse_logand();
 		expr_left = expr;
-		while_spaces();	
+		while_spaces();
 	}
+	return expr_left;
+}
+
+Expression* parse_expr() {		// second name - "parse_logor"
+	Expression* expr_left = parse_logor();
+	while_spaces();
+	if (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_IF) {
+		consume_token();
+		while_spaces();
+		Expression* expr = expression();
+		expr->kind = EXP_TERNARY;
+		expr->exp_left = expr_left;
+		expr->exp_right = parse_expr();
+		while_spaces();
+		expected_keyword(KEYWORD_ELSE);
+		while_spaces();
+		expr->exp_else = parse_expr();
+		while_spaces();
+		expr_left = expr;
+	}
+
+	/*while (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_OR) {
+		Expression* expr = expression();
+		expr->kind = EXP_BIN_OR;
+		consume_token();
+		while_spaces();
+		expr->exp_left = expr_left;
+		expr->exp_right = parse_logand();
+		expr_left = expr;
+		while_spaces();	
+	}*/
 	return expr_left;
 }
 
@@ -350,6 +381,7 @@ Statement* parse_stmt() {
 		Expression* expr = parse_expr();
 		stmt->expr = expr;
 		while_spaces();
+		change_block();
 	}
 	else if (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_IF) {
 		stmt->kind = STMT_IF;
@@ -398,8 +430,10 @@ Statement* parse_stmt() {
 			}
 			while_spaces();
 			//change_block();
-			spaces_block = BLOCK_CENTRAL;
+			//spaces_block = BLOCK_CENTRAL;
 		}
+		//change_block();
+		//spaces_block = BLOCK_CENTRAL;
 
 	}
 	
