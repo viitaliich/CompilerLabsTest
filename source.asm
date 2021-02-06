@@ -47,10 +47,10 @@ _label0:
 	mov ebx, 2
 	mov [ebp + -8], ebx
 	mov ebx, 0
+	mov ebx, [ebp + -8]
 	jmp _label3
 _label2:
 _label3:
-	mov ebx, [ebp + -8]
 _label1:
 	mov esp, ebp
 	pop ebp

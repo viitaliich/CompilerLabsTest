@@ -1,6 +1,14 @@
 uint16_t space_count_old = 0;
 uint16_t space_count_new = 0;
 
+typedef struct Block {
+	int index;
+	int num_spaces;
+};
+Block block;
+
+std::stack <Block> block_stack;
+
 typedef enum {
 	BLOCK_RIGHT,
 	BLOCK_CENTRAL,
@@ -342,38 +350,41 @@ Expression* parse_expr() {		// second name - "parse_logor"
 
 void set_block() {
 	if (space_count_new > space_count_old) {
-		spaces_block = BLOCK_RIGHT;
+		block.index++;
+		block.num_spaces = space_count_new;
 	} 
 	else if (space_count_new == space_count_old) {
-		spaces_block = BLOCK_CENTRAL;
+		// ...
 	}
 	else if (space_count_new < space_count_old) {
-		spaces_block = BLOCK_LEFT;
+		//block_stack.pop();		// ???
+
+		//while (space_count_new != block_stack.top().num_spaces && !block_stack.empty()) {
+		if (space_count_new != block_stack.top().num_spaces && !block_stack.empty()) {
+			block_stack.pop();
+		}
+		if (block_stack.empty()) fatal("ERR1");
+		//if (space_count_new != block_stack.top().num_spaces) fatal("ERR1");
+		block = block_stack.top();
+		//block_stack.pop();
 	}
 	else fatal("CAN'T SET BLOCK");
 }
 
 void change_block() {
 	// BUG: new line is empty, block changes anyway
+
 	if (token.kind == TOKEN_NEW_LINE) {
 		consume_token();
 		parse_spaces();
 		set_block();
 	}
-	else if (token.kind == TOKEN_EOF) {
-		spaces_block = BLOCK_LEFT;
-	}
-	else fatal("ERROR");		// TO DO: make it more specific
 }
 
 Statement* parse_stmt() {
+	
 	Statement* stmt = statement();
-	// ???
-	//set_block();
-	// TO DO: make changes
-	//if ((spaces_block == BLOCK_RIGHT && space_count_new <= space_count_old) ||
-	//	(spaces_block == BLOCK_CENTRAL && space_count_new != space_count_old)) 
-	//	fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
+
 	if (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_RET) {
 		stmt->kind = STMT_RET;
 		consume_token();
@@ -384,6 +395,8 @@ Statement* parse_stmt() {
 		change_block();
 	}
 	else if (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_IF) {
+		//Block blk = block;
+		
 		stmt->kind = STMT_IF;
 		consume_token();
 		while_spaces();
@@ -392,44 +405,53 @@ Statement* parse_stmt() {
 		while_spaces();
 		expected_token(TOKEN_COLON);
 		while_spaces();
-		expected_token(TOKEN_NEW_LINE);
-		parse_spaces();
-		set_block();
-		if (spaces_block == BLOCK_RIGHT) {
+
+		change_block();
+
+		//expected_token(TOKEN_NEW_LINE);
+		//parse_spaces();
+		//set_block();
+		if (!block_stack.empty() && block.index > block_stack.top().index) {
+			block_stack.push(block);
+
 			Statement* statement = parse_stmt();
 			stmt->stmt_queue->push(statement);
 		}
 		else fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 		
-		while (spaces_block == BLOCK_CENTRAL) {
+		//while (block.index == block_stack.top().index && token.kind != TOKEN_EOF) {
+		while (block.index == block_stack.top().index && token.kind != TOKEN_EOF && token.mod != KEYWORD_ELSE) {
 			Statement* statement = parse_stmt();
 			stmt->stmt_queue->push(statement);
 		}
 		while_spaces();
-		//change_block();
-		spaces_block = BLOCK_CENTRAL;
+
+		change_block();//???
 
 		//assert(token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_ELSE);
+
 		if (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_ELSE) {
 			consume_token();
 			while_spaces();
 			expected_token(TOKEN_COLON);
 			while_spaces();
-			expected_token(TOKEN_NEW_LINE);
-			parse_spaces();
-			set_block();
-			if (spaces_block == BLOCK_RIGHT) {
+			
+			change_block();
+
+			if (!block_stack.empty() && block.index > block_stack.top().index) {
+				block_stack.push(block);
+
 				Statement* statement = parse_stmt();
 				stmt->stmt_queue_two->push(statement);
 			}
 			else fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 
-			while (spaces_block == BLOCK_CENTRAL) {
+			while (block.index == block_stack.top().index && token.kind != TOKEN_EOF) {
 				Statement* statement = parse_stmt();
 				stmt->stmt_queue_two->push(statement);
 			}
 			while_spaces();
-			//change_block();
+			change_block();
 			//spaces_block = BLOCK_CENTRAL;
 		}
 		//change_block();
@@ -444,28 +466,11 @@ Statement* parse_stmt() {
 		while_spaces();
 		change_block();
 	}
-
-	if (token.kind == TOKEN_EOF) {
-		spaces_block = BLOCK_TERMINATE;
-	}
-	
-	// BUG: new line is empty, block changes anyway
-	//if (token.kind == TOKEN_NEW_LINE) {
-	//	consume_token();
-	//	parse_spaces();
-	//	set_block();
-	//} 
-	//else if (token.kind == TOKEN_EOF) {
-	//	spaces_block = BLOCK_LEFT;
-	//}
-	//else fatal("ERROR");		// TO DO: make it more specific
-	
-
 	return stmt;				
 }
 
+
 FuncDecl* parse_func_decl() {
-	parse_spaces();
 	expected_keyword(KEYWORD_DEF);
 	while_spaces();
 	const char* name = parse_name();
@@ -477,26 +482,21 @@ FuncDecl* parse_func_decl() {
 	while_spaces();
 	expected_token(TOKEN_COLON);
 	while_spaces();
-	expected_token(TOKEN_NEW_LINE);
-	// block marker for proper parce of spaces
-	//spaces_block = BLOCK_RIGHT;
-	parse_spaces();
-	set_block();
-	if (spaces_block == BLOCK_RIGHT) {
+
+	change_block();
+
+	if (!block_stack.empty() && block.index > block_stack.top().index) {		// ??? Can be errors
+		block_stack.push(block);
+
 		Statement* statement = parse_stmt();
 		f_decl->stmt_queue->push(statement);
-		//statement_queue.push(statement);
 		
 	}
 	else fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
-	//spaces_block = BLOCK_CENTRAL;
 
-	//while (token.kind != TOKEN_EOF) {
-	while (spaces_block == BLOCK_CENTRAL) {
-		//expected_token(TOKEN_NEW_LINE);
+	while (block.index == block_stack.top().index && token.kind != TOKEN_EOF) {
 		Statement* statement = parse_stmt();
 		f_decl->stmt_queue->push(statement);
-		//statement_queue.push(statement);
 	}
 	while_spaces();
 	if (!is_kind(TOKEN_EOF)) fatal("UNEXPECTED TOKEN INSTEAD EOF AT LINE [%d], POSITION [%d].", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
@@ -504,6 +504,12 @@ FuncDecl* parse_func_decl() {
 }
 
 Program* parse_prog() {
+	block = { 0, 0 };		// global variable initialization
+	
+	parse_spaces();
+	block = { 0, space_count_new };		
+	block_stack.push(block);
+
 	FuncDecl* func_decl = parse_func_decl();
 	return program(func_decl);
 }

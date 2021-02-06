@@ -4,6 +4,7 @@
 #include <fstream>
 #include <vector>
 #include <queue>
+#include <stack>
 #include <cstdlib>
 #include <cassert>
 #include <cstdarg>
