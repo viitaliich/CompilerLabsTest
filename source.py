@@ -1,9 +1,12 @@
 def main():
 	a = 1
-	b = 0
+	b = 1
 	if a:
-		b = 1
+		a = 2
 	else:
-		if b:
-			b = 2
-	return b
+		a = 3
+	if b:
+		b = 4
+	else:
+		b = 5
+	return a+b
