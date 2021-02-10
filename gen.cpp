@@ -7,6 +7,7 @@ size_t label_index = 0;		// index for distinguishing of labels in assembly code
 typedef std::queue <size_t> LabelIndices;		// queue to keep label's indices for future use
 
 int stack_index = -4;		// offset from EBP
+int old_stack_index = 0;
 
 // to keep variables in the variable map
 typedef struct Variable {
@@ -17,6 +18,11 @@ std::vector <Variable> var_map;
 //std::vector <Variable>::iterator it;
 // find variable in a variable map
 size_t var_map_find(const char* val) {
+	/*for (size_t i = var_map.size()-1; i >= 0; i--) {
+		if (var_map[i].name == val) {
+			return i;
+		}
+	}*/
 	for (size_t i = 0; i < var_map.size(); i++) {
 		if (var_map[i].name == val) {
 			return i;
@@ -178,9 +184,8 @@ void gen_bin_less_exp(Expression* expr) {
 	gen_exp(expr->exp_left);
 	buf = buf_printf(buf, "\tpush ebx\n");
 	gen_exp(expr->exp_right);
-	buf = buf_printf(buf,
-		"\tpop ecx\n\
-\tcmp ecx, ebx\n\
+	buf = buf_printf(buf, "\tpop ecx\n");
+	buf = buf_printf(buf, "\tcmp ecx, ebx\n\
 \tmov ebx, 0\n\
 \tsetl bl\n");
 }
@@ -449,6 +454,9 @@ void gen_stmt(Statement* stmt) {
 
 	if (stmt->kind == STMT_RET) {
 		gen_exp(stmt->expr);
+		buf = buf_printf(buf, "\tmov esp, ebp\n\
+\tpop ebp\n\
+\tret\n");		// function epilogue
 	}
 	else if (stmt->kind == STMT_EXP) {
 		gen_exp(stmt->expr);
@@ -460,15 +468,31 @@ void gen_stmt(Statement* stmt) {
 		buf = buf_printf(buf, "\tje _label%d\n", label_index);
 		label_indices->push(label_index);
 		label_index++;
+
+		// save previous state (old stack_index, var_map)
+		old_stack_index = stack_index;
+		std::vector <Variable> old_var_map(var_map);
+
 		gen_stmt_queue(stmt->stmt_queue); // statement if
 		buf = buf_printf(buf, "\tjmp _label%d\n", label_index);
 		label_indices->push(label_index);
 		label_index++;
 		buf = buf_printf(buf, "_label%d:\n", label_indices->front());
 		label_indices->pop();
+		
+		// delete if state
+		stack_index = old_stack_index;
+		var_map = old_var_map;
+
+
 		gen_stmt_queue(stmt->stmt_queue_two); // statement else
 		buf = buf_printf(buf, "_label%d:\n", label_indices->front());
 		label_indices->pop();
+
+		// delete else state
+		stack_index = old_stack_index;
+		var_map = old_var_map;
+
 	}
 
 	else fatal("No expression to generate in function [%s]", prog->func_decl->name);
@@ -544,10 +568,7 @@ void gen_func_decl() {
 
 	gen_stmt_queue(prog->func_decl->stmt_queue);
 
-	buf = buf_printf(buf, "\tmov esp, ebp\n\
-\tpop ebp\n\
-\tret\n\
-\nmain ENDP\n\n");		// function epilogue
+	buf = buf_printf(buf, "\nmain ENDP\n\n");
 	
 	gen_NumbToStr();
 }
