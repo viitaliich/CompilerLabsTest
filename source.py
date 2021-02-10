@@ -2,11 +2,9 @@ def main():
 	a = 0
 	if a:
 		b = 2
-		return b
+		a = 5
 	else:
-		c = 10
-		if a < c:
-			return 4
-		else:
-			return 5
-	return a
+		a = 889
+		c = 10+a
+		return c
+	return 0
