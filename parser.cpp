@@ -1,22 +1,24 @@
-uint16_t space_count_old = 0;
-uint16_t space_count_new = 0;
+uint16_t space_count_old = 0;		// number of spaces on previous line or statement
+uint16_t space_count_new = 0;		// number of spaces on the current line or statement
 
+// scope
 typedef struct Block {
-	int index;
-	int num_spaces;
+	int index;			// index of scope
+	int num_spaces;		// number of spaces in the current scope
 };
 Block block;
 
-std::stack <Block> block_stack;
+std::stack <Block> block_stack;		// stack of blocks
 
+// kinds of possible blocks
 typedef enum {
 	BLOCK_RIGHT,
 	BLOCK_CENTRAL,
 	BLOCK_LEFT,
-	BLOCK_TERMINATE,
+	BLOCK_TERMINATE,	// ??? do we need this?
 } SpacesBlock;
 
-SpacesBlock spaces_block;
+SpacesBlock spaces_block;	// ??? do we need this?
 
 Program* prog = nullptr;
 
@@ -245,7 +247,6 @@ Expression* parse_equals() {
 	return expr_left;
 }
 
-// Could be errors ???
 Expression* parse_assign() {
 	if (token.kind == TOKEN_NAME) {
 		Expression* expr = expression();
@@ -334,36 +335,22 @@ Expression* parse_expr() {		// second name - "parse_logor"
 		while_spaces();
 		expr_left = expr;
 	}
-
-	/*while (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_OR) {
-		Expression* expr = expression();
-		expr->kind = EXP_BIN_OR;
-		consume_token();
-		while_spaces();
-		expr->exp_left = expr_left;
-		expr->exp_right = parse_logand();
-		expr_left = expr;
-		while_spaces();	
-	}*/
 	return expr_left;
 }
 
 void set_block() {
-	if (space_count_new > space_count_old) {
+	if (space_count_new > space_count_old) {		// create new block
 		block.index++;
 		block.num_spaces = space_count_new;
 	} 
 	else if (space_count_new == space_count_old) {
-		// ...
+		// no changes, do nothing
 	}
 	else if (space_count_new < space_count_old) {
-		//block_stack.pop();		// ???
-
-		//if (space_count_new != block_stack.top().num_spaces && !block_stack.empty()) {
 		while (space_count_new != block_stack.top().num_spaces && !block_stack.empty()) {
 			block_stack.pop();
 		}
-		if (block_stack.empty()) fatal("ERR1");
+		if (block_stack.empty()) fatal("ERR1");		// ???
 		
 		block = block_stack.top();
 	}
@@ -372,6 +359,7 @@ void set_block() {
 
 void change_block() {
 	// BUG: new line is empty, block changes anyway
+	// could be errors ???
 
 	if (token.kind == TOKEN_NEW_LINE) {
 		consume_token();
@@ -381,7 +369,6 @@ void change_block() {
 }
 
 Statement* parse_stmt() {
-	
 	Statement* stmt = statement();
 
 	if (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_RET) {
@@ -394,48 +381,35 @@ Statement* parse_stmt() {
 		change_block();
 	}
 	else if (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_IF) {
-		
 		stmt->kind = STMT_IF;
 		consume_token();
 		while_spaces();
 		stmt->expr = parse_expr();
-		//Expression* expr = parse_expr();
 		while_spaces();
 		expected_token(TOKEN_COLON);
 		while_spaces();
 
 		change_block();
 
-		//expected_token(TOKEN_NEW_LINE);
-		//parse_spaces();
-		//set_block();
-
 		Block blk;
 
 		if (!block_stack.empty() && block.index > block_stack.top().index) {
 			block_stack.push(block);
-			blk = block;
+			blk = block;		// save current block for future changes back
 
 			Statement* statement = parse_stmt();
 			stmt->stmt_queue->push(statement);
-			
-			
 		}
 		else fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 		
-		//while (block.index == block_stack.top().index && token.kind != TOKEN_EOF && token.mod != KEYWORD_ELSE) {
 		while (block.index == blk.index && token.kind != TOKEN_EOF && token.mod != KEYWORD_ELSE) {
 			Statement* statement = parse_stmt();
 			stmt->stmt_queue->push(statement);
 		}
 
-		//block = block_stack.top();
-
 		while_spaces();
 
-		change_block();//???
-
-		//assert(token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_ELSE);
+		change_block();
 
 		if (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_ELSE) {
 			consume_token();
@@ -450,30 +424,21 @@ Statement* parse_stmt() {
 			if (!block_stack.empty() && block.index > block_stack.top().index) {
 				block_stack.push(block);
 
-				blk = block;
+				blk = block;	// save current block for future changes back
 
 				Statement* statement = parse_stmt();
 				stmt->stmt_queue_two->push(statement);
-
 			}
 			else fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 
-			//while (block.index == block_stack.top().index && token.kind != TOKEN_EOF) {
 			while (block.index == blk.index && token.kind != TOKEN_EOF) {
 				Statement* statement = parse_stmt();
 				stmt->stmt_queue_two->push(statement);
 			}
 
-			//block = block_stack.top();
-
-
 			while_spaces();
 			change_block();
-			//spaces_block = BLOCK_CENTRAL;
 		}
-		//change_block();
-		//spaces_block = BLOCK_CENTRAL;
-
 	}
 	
 	else {
@@ -485,7 +450,6 @@ Statement* parse_stmt() {
 	}
 	return stmt;				
 }
-
 
 FuncDecl* parse_func_decl() {
 	expected_keyword(KEYWORD_DEF);
@@ -521,7 +485,7 @@ FuncDecl* parse_func_decl() {
 }
 
 Program* parse_prog() {
-	block = { 0, 0 };		// global variable initialization
+	block = { 0, 0 };		// global variable initialization, first block
 	
 	parse_spaces();
 	block = { 0, space_count_new };		

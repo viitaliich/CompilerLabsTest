@@ -1,3 +1,5 @@
+// TOD DO: elif
+
 #pragma once
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
@@ -127,13 +129,6 @@ PAUSE\n");
 	return true;
 }
 
-//int main() {
-//	int a = 1 ? 2 ? 3 : 4 : 5;
-//	int b = 0 ? 2 ? 3 : 4 : 5;
-//	printf("%d", a*b);
-//	return 0;
-//}
-
 int main(int argc, char* argv) {
 	// TO DO: manual path input
 	const char* path = "source.py";			// path to source code
@@ -148,6 +143,7 @@ int main(int argc, char* argv) {
 		printf("BAT file generation failed.\n");
 		return 1;
 	}
+	printf("BAT file generation succeeded.\n");
 	system("source.bat");
 
 	return 0;

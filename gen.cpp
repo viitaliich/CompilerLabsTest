@@ -7,7 +7,7 @@ size_t label_index = 0;		// index for distinguishing of labels in assembly code
 typedef std::queue <size_t> LabelIndices;		// queue to keep label's indices for future use
 
 int stack_index = -4;		// offset from EBP
-int old_stack_index = 0;
+int old_stack_index = 0;	// used in scopes
 
 // to keep variables in the variable map
 typedef struct Variable {
@@ -18,11 +18,6 @@ std::vector <Variable> var_map;
 //std::vector <Variable>::iterator it;
 // find variable in a variable map
 size_t var_map_find(const char* val) {
-	/*for (size_t i = var_map.size()-1; i >= 0; i--) {
-		if (var_map[i].name == val) {
-			return i;
-		}
-	}*/
 	for (size_t i = 0; i < var_map.size(); i++) {
 		if (var_map[i].name == val) {
 			return i;
@@ -155,7 +150,7 @@ void gen_bin_or_exp(Expression* expr) {
 _label%d:\n", label_indices->front());
 	label_indices->pop();
 
-	delete label_indices;
+	delete label_indices;		// change ???
 }
 
 void gen_bin_eql_exp(Expression* expr) {
@@ -306,7 +301,7 @@ void gen_assign_exp(Expression* expr) {
 }
 
 void gen_ref_exp(Expression* expr) {
-	size_t it = var_map_find(expr->var);	// expr->exp_left->var	???
+	size_t it = var_map_find(expr->var);	
 	if (it != INT_MAX) {
 		buf = buf_printf(buf, "\tmov ebx, [ebp + %d]\n", var_map[it].stack_index);
 	}
@@ -446,7 +441,7 @@ void gen_exp(Expression* expr) {
 	}
 }
 
-// TO DO: own queue for indeices for each gen
+// TO DO: own queue for indeices for each gen ???
 
 void gen_stmt_queue(StatementQueue* stmt_queue);
 void gen_stmt(Statement* stmt) {
@@ -475,7 +470,7 @@ void gen_stmt(Statement* stmt) {
 
 		gen_stmt_queue(stmt->stmt_queue); // statement if
 		
-		// delete if state
+		// delete if state (old stack_index, var_map)
 		buf = buf_printf(buf, "\tadd esp, %d\n", old_stack_index - stack_index);
 		stack_index = old_stack_index;
 		var_map = old_var_map;
@@ -487,15 +482,13 @@ void gen_stmt(Statement* stmt) {
 		label_indices->pop();
 		gen_stmt_queue(stmt->stmt_queue_two); // statement else
 		
-		// delete else state
+		// delete else state (old stack_index, var_map)
 		buf = buf_printf(buf, "\tadd esp, %d\n", old_stack_index - stack_index);
 		stack_index = old_stack_index;
 		var_map = old_var_map;
 		
 		buf = buf_printf(buf, "_label%d:\n", label_indices->front());
 		label_indices->pop();
-
-		
 	}
 
 	else fatal("No expression to generate in function [%s]", prog->func_decl->name);
@@ -560,7 +553,6 @@ void gen_stmt_queue(StatementQueue* stmt_queue) {
 		gen_stmt(stmt_queue->front());
 		stmt_queue->pop();
 	}
-
 }
 
 void gen_func_decl() {
