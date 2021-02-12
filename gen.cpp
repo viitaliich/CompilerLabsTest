@@ -437,7 +437,8 @@ void gen_exp(Expression* expr) {
 		gen_ternary(expr);
 		break;
 	}
-	default: fatal("Nothing to generate in return expression in function [%s]", prog->func_decl->name);
+	//default: fatal("Nothing to generate in return expression in function [%s]", prog->func_decl->name);
+	default: fatal("Nothing to generate in return expression in function");
 	}
 }
 
@@ -491,7 +492,8 @@ void gen_stmt(Statement* stmt) {
 		label_indices->pop();
 	}
 
-	else fatal("No expression to generate in function [%s]", prog->func_decl->name);
+	//else fatal("No expression to generate in function [%s]", prog->func_decl->name);
+	else fatal("No expression to generate in function");
 
 	delete label_indices;
 }
@@ -502,11 +504,21 @@ void gen_data() {
 
 void gen_code() {
 	buf = buf_printf(buf, ".code\n\
-\nstart:\n\
-\n\tinvoke %s\n\n\
-\tinvoke  NumbToStr, ebx, ADDR buff\n\
-\tinvoke  StdOut, eax\n\
-\tinvoke  ExitProcess, 0\n\n", prog->func_decl->name);
+\nstart:\n");
+
+	for (size_t i = 0; i < prog->func_queue->size(); i++) {
+		//buf = buf_printf(buf, "%s\tPROTO\n", prog->func_queue[i]);
+		buf = buf_printf(buf, "\n\tinvoke %s\n", prog->func_queue->front()->name);
+		//prog->func_queue->push(prog->func_queue->front());
+		//prog->func_queue->pop();
+		prog->func_queue->push_back(prog->func_queue->front());
+		prog->func_queue->erase(prog->func_queue->begin());
+
+		buf = buf_printf(buf, "\tinvoke  NumbToStr, ebx, ADDR buff\n\
+\tinvoke  StdOut, eax\n");
+	}
+
+	buf = buf_printf(buf, "\tinvoke  ExitProcess, 0\n\n");
 }
 
 // transform number from register EBX to string presantation for output on console
@@ -555,17 +567,25 @@ void gen_stmt_queue(StatementQueue* stmt_queue) {
 	}
 }
 
-void gen_func_decl() {
-	buf = buf_printf(buf, "%s PROC\n", prog->func_decl->name);
+void gen_func_decl(FuncDecl* func_decl) {
+	buf = buf_printf(buf, "%s PROC\n", func_decl->name);
 	
-	if(prog->func_decl->stmt_queue->size() == 0) fatal("No statement to generate in function [%s]", prog->func_decl->name);
+	if (func_decl->name == nullptr) fatal("No function name to generate");
+	if(func_decl->stmt_queue->size() == 0) fatal("No statement to generate in function [%s]", func_decl->name);
 	buf = buf_printf(buf, "\tpush ebp\n\tmov ebp, esp\n");			// function prologue
 
-	gen_stmt_queue(prog->func_decl->stmt_queue);
+	gen_stmt_queue(func_decl->stmt_queue);
 
-	buf = buf_printf(buf, "\nmain ENDP\n\n");
+	buf = buf_printf(buf, "\n%s ENDP\n\n", func_decl->name);
 	
-	gen_NumbToStr();
+}
+
+void gen_func_queue(FuncQueue* func_queue) {
+	while (!func_queue->empty()) {
+		gen_func_decl(func_queue->front());
+		//func_queue->pop();
+		func_queue->erase(func_queue->begin());
+	}
 }
 
 // TO DO: path generator
@@ -583,15 +603,27 @@ includelib  c:\\masm32\\lib\\masm32.lib\n\n");
 void gen_prog() {
 	gen_includes();		
 	
-	if (prog->func_decl == nullptr) fatal("No function declaration to generate");
+	//if (prog->func_decl == nullptr) fatal("No function declaration to generate");
+	if (prog->func_queue->empty()) fatal("No functions to generate");
 
-	if (prog->func_decl->name == nullptr) fatal("No function name to generate");
-	buf = buf_printf(buf, "NumbToStr\tPROTO :DWORD,:DWORD\n\
-%s\tPROTO\n\n", prog->func_decl->name);
+
+	buf = buf_printf(buf, "NumbToStr\tPROTO :DWORD,:DWORD\n");
+	for (size_t i = 0; i < prog->func_queue->size(); i++) {
+		//buf = buf_printf(buf, "%s\tPROTO\n", prog->func_queue[i]);
+		buf = buf_printf(buf, "%s\tPROTO\n", prog->func_queue->front()->name);
+		//prog->func_queue->push(prog->func_queue->front());
+		prog->func_queue->push_back(prog->func_queue->front());
+		//prog->func_queue->pop();
+		prog->func_queue->erase(prog->func_queue->begin());
+	}
+	buf = buf_printf(buf, "\n");
+
 	gen_data();
 	gen_code();
 
-	gen_func_decl();
+	gen_func_queue(prog->func_queue);
+
+	gen_NumbToStr();
 }
 
 void code_gen() {

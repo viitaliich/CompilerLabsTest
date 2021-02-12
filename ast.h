@@ -25,6 +25,7 @@ typedef enum ExprKind {
 	EXP_ASSIGN,
 	EXP_VAR,
 	EXP_TERNARY,
+	EXP_CALL,
 }ExprKind;
 
 typedef enum StmtKind {
@@ -33,6 +34,8 @@ typedef enum StmtKind {
 	STMT_IF,
 	STMT_ELSE,
 }StmtKind;
+
+typedef std::vector <const char*> FuncParams;
 
 typedef struct Expression {
 	ExprKind kind;
@@ -45,7 +48,11 @@ typedef struct Expression {
 	Expression* exp_left;
 	Expression* exp_right;
 	Expression* exp_else;
+	std::vector <Expression*>* args;
 }Expression;
+
+typedef std::vector <Expression*> FuncArgs;
+
 
 typedef struct Statement {
 	Expression* expr;
@@ -59,9 +66,12 @@ typedef std::queue <Statement*> StatementQueue;
 
 typedef struct FuncDecl {
 	const char* name;
-	std::queue <Statement*>* stmt_queue;
+	FuncParams* parameters;
+	StatementQueue* stmt_queue;
 }FuncDecl;
 
+typedef std::vector <FuncDecl*> FuncQueue;
+
 typedef struct Program {
-	FuncDecl* func_decl;
+	FuncQueue* func_queue;
 }Program;

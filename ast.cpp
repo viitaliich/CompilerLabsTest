@@ -7,15 +7,16 @@ void* ast_alloc(size_t size) {
 	return ptr;
 }
 
-Program* program(FuncDecl* func_decl) {
-	Program* prog = (Program*)ast_alloc(sizeof(FuncDecl));
-	prog->func_decl = func_decl;
+Program* program() {
+	Program* prog = (Program*)ast_alloc(sizeof(Program));
+	prog->func_queue = new FuncQueue();
 	return prog;
 }
 
 FuncDecl* func_decl(const char* name) {
 	FuncDecl* f_decl = (FuncDecl*)ast_alloc(sizeof(FuncDecl));
 	f_decl->name = name;
+	f_decl->parameters = new FuncParams();
 	f_decl->stmt_queue = new StatementQueue();
 	return f_decl;
 }
@@ -29,5 +30,6 @@ Statement* statement() {
 
 Expression* expression() {
 	Expression* exp = (Expression*)ast_alloc(sizeof(Expression));
+	exp->args = new FuncArgs();
 	return exp;
 }

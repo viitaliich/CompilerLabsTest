@@ -1,5 +1,4 @@
 def main():
-	a = 1
-	if a:
-		return 19
-	return 59
+	return 8
+def ma0in():
+	return 99

@@ -9,6 +9,7 @@ includelib  c:\masm32\lib\masm32.lib
 
 NumbToStr	PROTO :DWORD,:DWORD
 main	PROTO
+ma0in	PROTO
 
 .data
 
@@ -19,7 +20,10 @@ buff 	 db 11 dup(?)
 start:
 
 	invoke main
+	invoke  NumbToStr, ebx, ADDR buff
+	invoke  StdOut, eax
 
+	invoke ma0in
 	invoke  NumbToStr, ebx, ADDR buff
 	invoke  StdOut, eax
 	invoke  ExitProcess, 0
@@ -27,27 +31,22 @@ start:
 main PROC
 	push ebp
 	mov ebp, esp
-	mov ebx, 1
-	push ebx
-	mov ebx, 0
-	mov ebx, [ebp + -4]
-	cmp ebx, 0
-	je _label0
-	mov ebx, 19
-	mov esp, ebp
-	pop ebp
-	ret
-	add esp, 0
-	jmp _label1
-_label0:
-	add esp, 0
-_label1:
-	mov ebx, 59
+	mov ebx, 8
 	mov esp, ebp
 	pop ebp
 	ret
 
 main ENDP
+
+ma0in PROC
+	push ebp
+	mov ebp, esp
+	mov ebx, 99
+	mov esp, ebp
+	pop ebp
+	ret
+
+ma0in ENDP
 
 NumbToStr PROC uses ebx x:DWORD,buffer:DWORD
 

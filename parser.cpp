@@ -36,7 +36,7 @@ void parse_spaces() {
 	// BUG: no empty lines between statements allowed
 	space_count_old = space_count_new;	// save previous number 
 	space_count_new = 0;
-	while (is_kind(TOKEN_SPACE) || is_kind(TOKEN_TAB)) {
+	while (is_kind(TOKEN_SPACE) || is_kind(TOKEN_TAB)) {		// TO DO: change all "is_kind(...)" on "token.kind == ..."
 		if (is_kind(TOKEN_SPACE)) {
 			space_count_new++;
 			consume_token();
@@ -89,6 +89,26 @@ Expression* parse_factor() {
 		expr->kind = EXP_VAR;
 		consume_token();
 		while_spaces();
+
+		if (token.kind == TOKEN_LPAREN) {
+			expr->kind = EXP_CALL;
+			consume_token();
+			while_spaces();
+			
+			expr->args->push_back(parse_expr());
+
+			while_spaces();
+			while (token.kind == TOKEN_COMA){
+				consume_token();
+				while_spaces();
+				expr->args->push_back(parse_expr());
+				while_spaces();
+
+			}
+			expected_token(TOKEN_RPAREN);
+			while_spaces();
+		}
+
 		break;
 	}
 	case TOKEN_INT:
@@ -459,6 +479,18 @@ FuncDecl* parse_func_decl() {
 	while_spaces();
 	expected_token(TOKEN_LPAREN);
 	while_spaces();
+
+	if (token.kind == TOKEN_NAME) {
+		f_decl->parameters->push_back(parse_name());
+		while_spaces();
+		while (token.kind == TOKEN_COMA) {
+			consume_token();
+			while_spaces();
+			f_decl->parameters->push_back(parse_name());
+			while_spaces();
+		}
+	}
+
 	expected_token(TOKEN_RPAREN);
 	while_spaces();
 	expected_token(TOKEN_COLON);
@@ -466,33 +498,77 @@ FuncDecl* parse_func_decl() {
 
 	change_block();
 
+	Block blk;
+
 	if (!block_stack.empty() && block.index > block_stack.top().index) {		// ??? Can be errors
 		block_stack.push(block);
 
+		blk = block;
+
 		Statement* statement = parse_stmt();
 		f_decl->stmt_queue->push(statement);
-		
 	}
 	else fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
 
-	while (block.index == block_stack.top().index && token.kind != TOKEN_EOF) {
+	while (block.index == blk.index && token.kind != TOKEN_EOF) {
 		Statement* statement = parse_stmt();
 		f_decl->stmt_queue->push(statement);
 	}
 	while_spaces();
-	if (!is_kind(TOKEN_EOF)) fatal("UNEXPECTED TOKEN INSTEAD EOF AT LINE [%d], POSITION [%d].", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
+	change_block();
+
 	return f_decl;
 }
 
 Program* parse_prog() {
-	block = { 0, 0 };		// global variable initialization, first block
-	
-	parse_spaces();
-	block = { 0, space_count_new };		
-	block_stack.push(block);
+	Program* prog = program();
+	// global variable initialization, first block
+	// set block, where functions will be
+	block = { 0, 0 };		
+	if (token.kind == TOKEN_SPACE || token.kind == TOKEN_TAB)
+		fatal("FUNCTION DECLARATION MUST BE ON FIRST CURSOR POSITION");
+	else block_stack.push(block);
+
+	Block blk;
+	blk = block;
 
 	FuncDecl* func_decl = parse_func_decl();
-	return program(func_decl);
+	//prog->func_queue->push(func_decl);
+	
+	// Check definition of this function	???
+	if (!prog->func_queue->empty()) {
+		bool found = false;
+		for (size_t i = 0; i < prog->func_queue->size(); i++) {
+			if (prog->func_queue->at(i)->name == func_decl->name) {
+				prog->func_queue->at(i) = func_decl;
+				found = true;
+			}
+			
+		}
+		if(!found) prog->func_queue->push_back(func_decl);
+	}
+	else prog->func_queue->push_back(func_decl);
+	
+	while (block.index == blk.index && token.kind != TOKEN_EOF) {
+		FuncDecl* func_decl = parse_func_decl();
+		
+		bool found = false;
+		for (size_t i = 0; i < prog->func_queue->size(); i++) {
+			if (prog->func_queue->at(i)->name == func_decl->name) {
+				prog->func_queue->at(i) = func_decl;
+				found = true;
+			}
+			else prog->func_queue->push_back(func_decl);
+		}
+		if (!found) prog->func_queue->push_back(func_decl);
+
+		//prog->func_queue->push(func_decl); ---
+		//prog->func_queue->push_back(func_decl); +++
+	}
+	while_spaces();
+	if (!is_kind(TOKEN_EOF)) fatal("UNEXPECTED TOKEN INSTEAD EOF AT LINE [%d], POSITION [%d].", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
+
+	return prog;
 }
 
 void parse_file() {

@@ -51,6 +51,8 @@ typedef enum TokenKind {
 
 	TOKEN_ASSIGN,		// =
 
+	TOKEN_COMA,
+
 }TokenKind;
 
 typedef struct Token {
@@ -480,6 +482,12 @@ repeat:
 
 	case '^': {
 		token.kind = TOKEN_XOR;
+		stream++;
+		break;
+	}
+
+	case ',': {
+		token.kind = TOKEN_COMA;
 		stream++;
 		break;
 	}
