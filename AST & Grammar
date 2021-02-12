@@ -6,8 +6,11 @@ NOTE:
 Grammar:
 	<program> 	::= <function>
 	<function> 	::= "def" name "(" ")" ":" { <statement> }
-	<statement> ::= "return" <exp | <exp> 
-	<exp> 		::= <log_and> { "or" <log_and> }
+	<statement> ::= "return" <exp |
+					<exp> |
+					"if" <exp> ":" { <statement> } [ "else" ":" { <statement> } ]
+	<exp> 		::= <log_or> ["if" <exp> "else" <exp>] 
+	<log_or>	::= <log_and> { "or" <log_and> }
 	<log_and> 	::= <not> { "and" <not_op> }
 	<not_op> 	::= "not" <exp> | <assign>
 	<assign> 	::= <name> "=" <exp> | <equals> 
@@ -24,10 +27,12 @@ Grammar:
 AST:
 	program 		= 	Program(function)
 	function 		= 	Function(string, statement list)
-	statement list 	= 	Return(exp) |
-						Exp(exp)
+	statement		= 	Return(exp) |
+						Exp(exp) |
+						Conditional(exp, statement list, statement list option)
 	exp 			= 	Assign(string, exp) | 
 						Var(string) | 
 						UnOp(unary_operator, exp) | 
 						BinOp(binary_operator, left_exp, right_exp) | 
-						Constant(int, float, str)
+						Constant(int, float, str) |
+						CondExp(exp, exp, exp)
