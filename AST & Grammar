@@ -4,8 +4,8 @@ NOTE:
 	in Python spaces, tabulation, new line, ... are tokens. Also their quantity is essential. They are not indicated in Grammar for readability.
 
 Grammar:
-	<program> 	::= <function>
-	<function> 	::= "def" name "(" ")" ":" { <statement> }
+	<program> 	::= { <function> }
+	<function> 	::= "def" name "(" [ <id> { "," <id> } ] ")" ":" { <statement> }
 	<statement> ::= "return" <exp |
 					<exp> |
 					"if" <exp> ":" { <statement> } [ "else" ":" { <statement> } ]
@@ -21,17 +21,22 @@ Grammar:
 	<shift>		::= <add> { ("<<" | ">>") <add> }
 	<add> 		::= <term> { ("+" | "-") <term> }
 	<term> 		::= <factor> { ("*" | "/" | "%") <factor> }
-	<factor> 	::= "(" <exp> ")" | <unary_op> <factor> | name | int | float | str
-	<unary_op> 	::= ~" | "-"
+	<factor> 	::= id "(" [ <exp> { "," <exp> } ] ")" | 
+					"(" <exp> ")" | 
+					<unary_op> <factor> |
+					name | int | float | str
 
 AST:
-	program 		= 	Program(function)
-	function 		= 	Function(string, statement list)
+	program 		= 	Program(function list)
+	function 		= 	Function(	string,			// name
+									string list,	// parameters
+									statement list)
 	statement		= 	Return(exp) |
 						Exp(exp) |
 						Conditional(exp, statement list, statement list option)
 	exp 			= 	Assign(string, exp) | 
 						Var(string) | 
+						FunCall(string, exp list) |
 						UnOp(unary_operator, exp) | 
 						BinOp(binary_operator, left_exp, right_exp) | 
 						Constant(int, float, str) |

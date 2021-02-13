@@ -33,6 +33,10 @@ typedef enum StmtKind {
 	STMT_EXP,
 	STMT_IF,
 	STMT_ELSE,
+	STMT_FOR,
+	STMT_WHILE,
+	STMT_BREAK,
+	STMT_CONTINUE,
 }StmtKind;
 
 
@@ -57,6 +61,9 @@ typedef std::vector <Expression*> FuncArgs;
 
 typedef struct Statement {
 	Expression* expr;
+	Expression* expr_one;		// range(a, ...
+	Expression* expr_two;		// ... b, ...
+	Expression* expr_three;		// ... c)
 	Statement* stmt;
 	StmtKind kind;
 	std::queue <Statement*> *stmt_queue;

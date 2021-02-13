@@ -476,7 +476,127 @@ Statement* parse_stmt() {
 			change_block();
 		}
 	}
-	
+	else if (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_FOR) {
+		stmt->kind = STMT_FOR;
+		consume_token();
+		while_spaces();
+		stmt->expr = parse_expr();
+		while_spaces();
+		expected_keyword(KEYWORD_IN);
+		while_spaces();
+		expected_keyword(KEYWORD_RANGE);
+		while_spaces();
+		expected_token(TOKEN_LPAREN);
+		while_spaces();
+		stmt->expr_two = parse_expr();
+		if (token.kind == TOKEN_COMA) {
+			stmt->expr_one = stmt->expr_two;
+			consume_token();
+			while_spaces();
+			stmt->expr_two = parse_expr();
+			while_spaces();
+			if (token.kind == TOKEN_COMA) {
+				consume_token();
+				while_spaces();
+				stmt->expr_three = parse_expr();
+			}
+		}
+		while_spaces();
+		expected_token(TOKEN_RPAREN);
+		expected_token(TOKEN_COLON);
+		while_spaces();
+
+		change_block();
+
+		Block blk;
+
+		if (!block_stack.empty() && block.index > block_stack.top().index) {
+			block_stack.push(block);
+			blk = block;		// save current block for future changes back
+
+			Statement* statement = parse_stmt();
+			stmt->stmt_queue->push(statement);
+		}
+		else fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
+
+		while (block.index == blk.index && token.kind != TOKEN_EOF /*&& token.mod != KEYWORD_ELSE*/) {
+			Statement* statement = parse_stmt();
+			stmt->stmt_queue->push(statement);
+		}
+		while_spaces();
+		change_block();
+	}
+	else if (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_WHILE) {
+		stmt->kind = STMT_WHILE;
+		consume_token();
+		while_spaces();
+		stmt->expr = parse_expr();
+		while_spaces();
+		expected_token(TOKEN_COLON);
+		while_spaces();
+
+		change_block();
+
+		Block blk;
+
+		if (!block_stack.empty() && block.index > block_stack.top().index) {
+			block_stack.push(block);
+			blk = block;		// save current block for future changes back
+
+			Statement* statement = parse_stmt();
+			stmt->stmt_queue->push(statement);
+		}
+		else fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
+		
+		while (block.index == blk.index && token.kind != TOKEN_EOF && token.mod != KEYWORD_ELSE) {
+			Statement* statement = parse_stmt();
+			stmt->stmt_queue->push(statement);
+		}
+
+		while_spaces();
+		change_block();
+
+		if (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_ELSE) {
+			consume_token();
+			while_spaces();
+			expected_token(TOKEN_COLON);
+			while_spaces();
+			
+			change_block();
+
+			Block blk;
+
+			if (!block_stack.empty() && block.index > block_stack.top().index) {
+				block_stack.push(block);
+
+				blk = block;	// save current block for future changes back
+
+				Statement* statement = parse_stmt();
+				stmt->stmt_queue_two->push(statement);
+			}
+			else fatal("OUT OF SCOPE AT LINE [%d], POSITION [%d]", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));
+
+			while (block.index == blk.index && token.kind != TOKEN_EOF) {
+				Statement* statement = parse_stmt();
+				stmt->stmt_queue_two->push(statement);
+			}
+
+			while_spaces();
+			change_block();
+		}
+	}
+	else if (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_BREAK) {
+		stmt->kind = STMT_BREAK;
+		consume_token();
+		while_spaces();
+		change_block();
+	}
+	else if (token.kind == TOKEN_KEYWORD && token.mod == KEYWORD_CONTINUE) {
+		stmt->kind = STMT_CONTINUE;
+		consume_token();
+		while_spaces();
+		change_block();
+	}
 	else {
 		stmt->kind = STMT_EXP;
 		Expression* expr = parse_expr();

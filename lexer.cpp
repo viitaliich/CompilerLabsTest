@@ -10,6 +10,12 @@ typedef enum KeywordMod {
 	KEYWORD_IF,
 	KEYWORD_ELSE,
 	KEYWORD_ELIF,
+	KEYWORD_FOR,
+	KEYWORD_IN,
+	KEYWORD_RANGE,
+	KEYWORD_WHILE,
+	KEYWORD_BREAK,
+	KEYWORD_CONTINUE,
 	KEYWORD_RET,
 }KeywordMod;
 
@@ -286,6 +292,24 @@ bool is_keyword(const char* name) {
 		else if (name == interns[KEYWORD_ELIF].str) {
 			token.mod = KEYWORD_ELIF;
 		}
+		else if (name == interns[KEYWORD_FOR].str) {
+			token.mod = KEYWORD_FOR;
+		}
+		else if (name == interns[KEYWORD_IN].str) {
+			token.mod = KEYWORD_IN;
+		}
+		else if (name == interns[KEYWORD_RANGE].str) {
+			token.mod = KEYWORD_RANGE;
+		}
+		else if (name == interns[KEYWORD_WHILE].str) {
+			token.mod = KEYWORD_WHILE;
+		}
+		else if (name == interns[KEYWORD_BREAK].str) {
+			token.mod = KEYWORD_BREAK;
+		}
+		else if (name == interns[KEYWORD_CONTINUE].str) {
+			token.mod = KEYWORD_CONTINUE;
+		}
 		else fatal("Error in keyword [%s] mod detection", name);
 		
 		return true;
@@ -525,6 +549,12 @@ void init_keywords() {
 	keyword("if");
 	keyword("else");
 	keyword("elif");
+	keyword("for");
+	keyword("in");
+	keyword("range");
+	keyword("while");
+	keyword("break");
+	keyword("continue");
 	last_keyword = keyword("return");
 	inited = true;
 }

@@ -34,11 +34,12 @@ sum ENDP
 main PROC
 	push ebp
 	mov ebp, esp
-	mov ebx, 1
-	push ebx
-	call sum
-	add esp, 4
 	mov ebx, 0
+	invoke  NumbToStr, ebx, ADDR buff
+	invoke  StdOut, eax
+	mov esp, ebp
+	pop ebp
+	ret
 
 main ENDP
 
