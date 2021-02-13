@@ -1,4 +1,5 @@
 def main():
-	for i in range(1, 5):
-		a = 5
-	return 0
+	a = 0
+	for i in range(9):
+		a = a+1
+	return a

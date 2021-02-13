@@ -24,32 +24,38 @@ start:
 main PROC
 	push ebp
 	mov ebp, esp
-	mov ebx, 1
+	mov ebx, 0
+	push ebx
+	mov ebx, 0
+	mov ebx, 0
 	push ebx
 _label0:
-	mov ebx, 1
-	mov [ebp + -4], ebx
+	mov ebx, [ebp + -8]
 	push ebx
-	mov ebx, 5
+	mov ebx, 9
 	pop ecx
 	cmp ecx, ebx
 	mov ebx, 0
 	setl bl
 	cmp ebx, 0
 	je _label1
-	mov ebx, 5
-	push ebx
-	mov ebx, 0
-	add esp, 4
-	mov ebx, 1
-	mov [ebp + -4], ebx
+	mov ebx, [ebp + -4]
 	push ebx
 	mov ebx, 1
 	pop ecx
 	add ebx, ecx
+	mov [ebp + -4], ebx
+	mov ebx, 0
+	add esp, 0
+	mov ebx, [ebp + -8]
+	push ebx
+	mov ebx, 1
+	pop ecx
+	add ebx, ecx
+	mov [ebp + -8], ebx
 	jmp _label0
 _label1:
-	mov ebx, 0
+	mov ebx, [ebp + -4]
 	invoke  NumbToStr, ebx, ADDR buff
 	invoke  StdOut, eax
 	mov esp, ebp
