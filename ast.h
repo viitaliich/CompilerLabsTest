@@ -35,7 +35,6 @@ typedef enum StmtKind {
 	STMT_ELSE,
 }StmtKind;
 
-typedef std::vector <const char*> FuncParams;
 
 typedef struct Expression {
 	ExprKind kind;
@@ -50,6 +49,8 @@ typedef struct Expression {
 	Expression* exp_else;
 	std::vector <Expression*>* args;
 }Expression;
+
+typedef std::vector <Expression*> FuncParams;
 
 typedef std::vector <Expression*> FuncArgs;
 
@@ -74,4 +75,5 @@ typedef std::vector <FuncDecl*> FuncQueue;
 
 typedef struct Program {
 	FuncQueue* func_queue;
+	FuncQueue* defined_func;
 }Program;

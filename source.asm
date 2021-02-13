@@ -8,8 +8,8 @@ includelib  c:\masm32\lib\kernel32.lib
 includelib  c:\masm32\lib\masm32.lib
 
 NumbToStr	PROTO :DWORD,:DWORD
+sum	PROTO
 main	PROTO
-ma0in	PROTO
 
 .data
 
@@ -20,33 +20,27 @@ buff 	 db 11 dup(?)
 start:
 
 	invoke main
-	invoke  NumbToStr, ebx, ADDR buff
-	invoke  StdOut, eax
-
-	invoke ma0in
-	invoke  NumbToStr, ebx, ADDR buff
-	invoke  StdOut, eax
 	invoke  ExitProcess, 0
+
+sum PROC
+	push ebp
+	mov ebp, esp
+	mov ebx, 5
+	mov [ebp + 8], ebx
+	mov ebx, 0
+
+sum ENDP
 
 main PROC
 	push ebp
 	mov ebp, esp
-	mov ebx, 8
-	mov esp, ebp
-	pop ebp
-	ret
+	mov ebx, 1
+	push ebx
+	call sum
+	add esp, 4
+	mov ebx, 0
 
 main ENDP
-
-ma0in PROC
-	push ebp
-	mov ebp, esp
-	mov ebx, 99
-	mov esp, ebp
-	pop ebp
-	ret
-
-ma0in ENDP
 
 NumbToStr PROC uses ebx x:DWORD,buffer:DWORD
 

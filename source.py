@@ -1,4 +1,4 @@
+def sum(x):
+	x = 5
 def main():
-	return 8
-def ma0in():
-	return 99
+	sum(1)

@@ -331,6 +331,39 @@ void gen_ternary(Expression* expr) {
 	delete label_indices;
 }
 
+void gen_call(Expression* expr) {
+	// 555
+	// check presence of function definition, equality of function parameters and arguments
+	bool presence = false;
+	size_t i = 0;
+	while (!presence && i < prog->defined_func->size()) {
+		if (expr->var == prog->defined_func->at(i)->name) {
+			presence = true;
+			if (expr->args->size() != prog->defined_func->at(i)->parameters->size()) {
+				fatal("NUMBER OF FUNCTION PARAMETERS AND FUNCTION ARGUMENTS IS NOT EQUAL");
+			}
+		}
+		i++;
+	}
+	while (!presence && i < prog->func_queue->size()) {
+		if (expr->var == prog->func_queue->at(i)->name) {
+			presence = true;
+			if (expr->args->size() != prog->func_queue->at(i)->parameters->size()) {
+				fatal("NUMBER OF FUNCTION PARAMETERS AND FUNCTION ARGUMENTS IS NOT EQUAL");
+			}
+		}
+		i++;
+	}
+	if (!presence) fatal("FUNCTION [%s] NOT DEFINED", expr->var);
+
+	for (int i = expr->args->size() - 1; i >= 0; i--) {
+		gen_exp(expr->args->at(i));
+		buf = buf_printf(buf, "\tpush ebx\n");
+	}
+	buf = buf_printf(buf, "\tcall %s\n", expr->var);
+	buf = buf_printf(buf, "\tadd esp, %d\n", 4* expr->args->size());
+}
+
 void gen_exp(Expression* expr) {
 	switch(expr->kind){
 	case EXP_INT: {
@@ -437,6 +470,10 @@ void gen_exp(Expression* expr) {
 		gen_ternary(expr);
 		break;
 	}
+	case EXP_CALL: {
+		gen_call(expr);
+		break;
+	}
 	//default: fatal("Nothing to generate in return expression in function [%s]", prog->func_decl->name);
 	default: fatal("Nothing to generate in return expression in function");
 	}
@@ -450,6 +487,8 @@ void gen_stmt(Statement* stmt) {
 
 	if (stmt->kind == STMT_RET) {
 		gen_exp(stmt->expr);
+
+		buf = buf_printf(buf, "\tinvoke  NumbToStr, ebx, ADDR buff\n\tinvoke  StdOut, eax\n");
 		buf = buf_printf(buf, "\tmov esp, ebp\n\
 \tpop ebp\n\
 \tret\n");		// function epilogue
@@ -506,7 +545,11 @@ void gen_code() {
 	buf = buf_printf(buf, ".code\n\
 \nstart:\n");
 
-	for (size_t i = 0; i < prog->func_queue->size(); i++) {
+	buf = buf_printf(buf, "\n\tinvoke main\n");
+	//buf = buf_printf(buf, "\tinvoke  NumbToStr, ebx, ADDR buff\n\
+\tinvoke  StdOut, eax\n");
+
+	/*for (size_t i = 0; i < prog->func_queue->size(); i++) {
 		//buf = buf_printf(buf, "%s\tPROTO\n", prog->func_queue[i]);
 		buf = buf_printf(buf, "\n\tinvoke %s\n", prog->func_queue->front()->name);
 		//prog->func_queue->push(prog->func_queue->front());
@@ -516,7 +559,7 @@ void gen_code() {
 
 		buf = buf_printf(buf, "\tinvoke  NumbToStr, ebx, ADDR buff\n\
 \tinvoke  StdOut, eax\n");
-	}
+	}*/
 
 	buf = buf_printf(buf, "\tinvoke  ExitProcess, 0\n\n");
 }
@@ -568,11 +611,20 @@ void gen_stmt_queue(StatementQueue* stmt_queue) {
 }
 
 void gen_func_decl(FuncDecl* func_decl) {
-	buf = buf_printf(buf, "%s PROC\n", func_decl->name);
-	
+	buf = buf_printf(buf, "%s PROC\n", func_decl->name);	
+
+	// parameters definition
+	int param_offset = 8;		// ???
+	for (size_t i = 0; i < func_decl->parameters->size(); i++) {
+		var_map.push_back({ func_decl->parameters->at(i)->var, param_offset });
+		param_offset += 4;
+	}
+
 	if (func_decl->name == nullptr) fatal("No function name to generate");
 	if(func_decl->stmt_queue->size() == 0) fatal("No statement to generate in function [%s]", func_decl->name);
 	buf = buf_printf(buf, "\tpush ebp\n\tmov ebp, esp\n");			// function prologue
+
+	
 
 	gen_stmt_queue(func_decl->stmt_queue);
 
@@ -582,8 +634,10 @@ void gen_func_decl(FuncDecl* func_decl) {
 
 void gen_func_queue(FuncQueue* func_queue) {
 	while (!func_queue->empty()) {
+		var_map.resize(0);		// clean up variable map
 		gen_func_decl(func_queue->front());
 		//func_queue->pop();
+		prog->defined_func->push_back(func_queue->front());		// 555
 		func_queue->erase(func_queue->begin());
 	}
 }

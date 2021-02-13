@@ -91,20 +91,36 @@ Expression* parse_factor() {
 		while_spaces();
 
 		if (token.kind == TOKEN_LPAREN) {
+			//// check presence of function definition, equality of function parameters and arguments
+			//bool presence = false;
+			//size_t i = 0;
+			//while (!presence && i < prog->func_queue->size()) {
+			//	if (expr->var == prog->func_queue->at(i)->name) {
+			//		presence = true;
+			//		if (expr->args->size() != prog->func_queue->at(i)->parameters->size()) {
+			//			fatal("NUMBER OF FUNCTION PARAMETERS AND FUNCTION ARGUMENTS IS NOT EQUAL");
+			//		}
+			//	}
+			//	i++;
+			//}
+			//if (!presence) fatal("FUNCTION [%s] NOT DEFINED", expr->var);
+
 			expr->kind = EXP_CALL;
 			consume_token();
 			while_spaces();
-			
-			expr->args->push_back(parse_expr());
 
-			while_spaces();
-			while (token.kind == TOKEN_COMA){
-				consume_token();
-				while_spaces();
+			if (token.kind != TOKEN_RPAREN) {
 				expr->args->push_back(parse_expr());
 				while_spaces();
+				while (token.kind == TOKEN_COMA) {
+					consume_token();
+					while_spaces();
+					expr->args->push_back(parse_expr());
+					while_spaces();
 
+				}
 			}
+			
 			expected_token(TOKEN_RPAREN);
 			while_spaces();
 		}
@@ -481,12 +497,12 @@ FuncDecl* parse_func_decl() {
 	while_spaces();
 
 	if (token.kind == TOKEN_NAME) {
-		f_decl->parameters->push_back(parse_name());
+		f_decl->parameters->push_back(parse_expr());	
 		while_spaces();
 		while (token.kind == TOKEN_COMA) {
 			consume_token();
 			while_spaces();
-			f_decl->parameters->push_back(parse_name());
+			f_decl->parameters->push_back(parse_expr());
 			while_spaces();
 		}
 	}
@@ -538,11 +554,14 @@ Program* parse_prog() {
 	// Check definition of this function	???
 	if (!prog->func_queue->empty()) {
 		bool found = false;
-		for (size_t i = 0; i < prog->func_queue->size(); i++) {
+		size_t i = 0;
+		while(!found && i < prog->func_queue->size()){
+		//for (size_t i = 0; i < prog->func_queue->size(); i++) {
 			if (prog->func_queue->at(i)->name == func_decl->name) {
 				prog->func_queue->at(i) = func_decl;
 				found = true;
 			}
+			i++;
 			
 		}
 		if(!found) prog->func_queue->push_back(func_decl);
@@ -553,12 +572,15 @@ Program* parse_prog() {
 		FuncDecl* func_decl = parse_func_decl();
 		
 		bool found = false;
-		for (size_t i = 0; i < prog->func_queue->size(); i++) {
+		size_t i = 0;
+		while (!found && i < prog->func_queue->size()) {
+		//for (size_t i = 0; i < prog->func_queue->size(); i++) {
 			if (prog->func_queue->at(i)->name == func_decl->name) {
 				prog->func_queue->at(i) = func_decl;
 				found = true;
 			}
 			else prog->func_queue->push_back(func_decl);
+			i++;
 		}
 		if (!found) prog->func_queue->push_back(func_decl);
 

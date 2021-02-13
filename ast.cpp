@@ -10,6 +10,7 @@ void* ast_alloc(size_t size) {
 Program* program() {
 	Program* prog = (Program*)ast_alloc(sizeof(Program));
 	prog->func_queue = new FuncQueue();
+	prog->defined_func = new FuncQueue();
 	return prog;
 }
 
