@@ -530,6 +530,67 @@ void gen_stmt(Statement* stmt) {
 		buf = buf_printf(buf, "_label%d:\n", label_indices->front());
 		label_indices->pop();
 	}
+	else if (stmt->kind == STMT_WHILE) {
+		buf = buf_printf(buf, "_label%d:\n", label_index);
+		label_indices->push(label_index);
+		label_index++;
+		gen_exp(stmt->expr);
+		buf = buf_printf(buf, "\tcmp ebx, 0\n");
+		buf = buf_printf(buf, "\tje _label%d\n", label_index);
+		label_indices->push(label_index);
+		label_index++;
+
+		// save previous state (old stack_index, var_map)
+		old_stack_index = stack_index;
+		std::vector <Variable> old_var_map(var_map);
+
+		gen_stmt_queue(stmt->stmt_queue); // statement if
+
+		// delete if state (old stack_index, var_map)
+		buf = buf_printf(buf, "\tadd esp, %d\n", old_stack_index - stack_index);
+		stack_index = old_stack_index;
+		var_map = old_var_map;
+
+		buf = buf_printf(buf, "\tjmp _label%d\n", label_indices->front());
+		label_indices->pop();
+		buf = buf_printf(buf, "_label%d:\n", label_indices->front());
+		label_indices->pop();
+
+		gen_stmt_queue(stmt->stmt_queue_two); // statement else
+
+		// delete else state (old stack_index, var_map)
+		buf = buf_printf(buf, "\tadd esp, %d\n", old_stack_index - stack_index);
+		stack_index = old_stack_index;
+		var_map = old_var_map;
+	}
+	else if (stmt->kind == STMT_FOR) {		// ???
+		gen_exp(stmt->expr);
+		buf = buf_printf(buf, "_label%d:\n", label_index);
+		label_indices->push(label_index);
+		label_index++;
+		gen_exp(stmt->expr_two);
+		buf = buf_printf(buf, "\tcmp ebx, 0\n");
+		buf = buf_printf(buf, "\tje _label%d\n", label_index);
+		label_indices->push(label_index);
+		label_index++;
+
+		// save previous state (old stack_index, var_map)
+		old_stack_index = stack_index;
+		std::vector <Variable> old_var_map(var_map);
+
+		gen_stmt_queue(stmt->stmt_queue); // statement if
+
+		// delete if state (old stack_index, var_map)
+		buf = buf_printf(buf, "\tadd esp, %d\n", old_stack_index - stack_index);
+		stack_index = old_stack_index;
+		var_map = old_var_map;
+
+		gen_exp(stmt->expr_three);
+		buf = buf_printf(buf, "\tjmp _label%d\n", label_indices->front());
+		label_indices->pop();
+		buf = buf_printf(buf, "_label%d:\n", label_indices->front());
+		label_indices->pop();
+	}
 
 	//else fatal("No expression to generate in function [%s]", prog->func_decl->name);
 	else fatal("No expression to generate in function");

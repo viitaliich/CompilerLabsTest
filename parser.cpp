@@ -480,7 +480,14 @@ Statement* parse_stmt() {
 		stmt->kind = STMT_FOR;
 		consume_token();
 		while_spaces();
-		stmt->expr = parse_expr();
+		// initialize "init" condition to zero
+		stmt->expr = expression();
+		stmt->expr->kind = EXP_ASSIGN;
+		stmt->expr->exp_left = parse_expr();
+		stmt->expr->exp_right = expression();
+		stmt->expr->exp_right->kind = EXP_INT;
+		stmt->expr->exp_right->int_val = 0;
+		//if (stmt->expr->kind != EXP_VAR) fatal("ERR");
 		while_spaces();
 		expected_keyword(KEYWORD_IN);
 		while_spaces();
@@ -490,15 +497,33 @@ Statement* parse_stmt() {
 		while_spaces();
 		stmt->expr_two = parse_expr();
 		if (token.kind == TOKEN_COMA) {
-			stmt->expr_one = stmt->expr_two;
+			stmt->expr->exp_right = stmt->expr_two;
+			//stmt->expr_one = stmt->expr_two;		// we don't need expr_one at all
 			consume_token();
 			while_spaces();
-			stmt->expr_two = parse_expr();
+			stmt->expr_two = expression();
+			stmt->expr_two->kind = EXP_BIN_LESS;
+			stmt->expr_two->exp_left = stmt->expr;
+			stmt->expr_two->exp_right = parse_expr();
+			TO DO ...
+
 			while_spaces();
 			if (token.kind == TOKEN_COMA) {
 				consume_token();
 				while_spaces();
-				stmt->expr_three = parse_expr();
+				stmt->expr_three = expression();
+				stmt->expr_three->kind = EXP_BIN_ADD;
+				stmt->expr_three->exp_left = stmt->expr;
+				stmt->expr_three->exp_right = parse_expr();
+			}
+			else {
+				stmt->expr_three = expression();
+				stmt->expr_three->kind = EXP_BIN_ADD;
+				stmt->expr_three->exp_left = expression();
+				stmt->expr_three->exp_left = stmt->expr;
+				stmt->expr_three->exp_right = expression();
+				stmt->expr_three->exp_right->kind = EXP_INT;
+				stmt->expr_three->exp_right->int_val = 1;
 			}
 		}
 		while_spaces();
