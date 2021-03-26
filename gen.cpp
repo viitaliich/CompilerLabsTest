@@ -2,7 +2,6 @@ char* buf = nullptr;		// string buffer
 size_t buf_len = 0;			// current length of string
 size_t buf_cap = 0;			// possible length of string
 size_t label_index = 0;		// index for distinguishing of labels in assembly code
-//std::queue <size_t> label_indices;		// queue to keep label's indices for future use
 
 typedef std::queue <size_t> LabelIndices;		// queue to keep label's indices for future use
 
@@ -64,7 +63,7 @@ void gen_unlogneg_exp(Expression* expr) {
 	buf = buf_printf(buf, 
 		"\tcmp ebx, 0\n\
 \tmov ebx, 0\n\
-\tsete bl\n");			// or EBX		???
+\tsete bl\n");			
 }
 
 void gen_binadd_exp(Expression* expr) {
@@ -150,7 +149,7 @@ void gen_bin_or_exp(Expression* expr) {
 _label%d:\n", label_indices->front());
 	label_indices->pop();
 
-	delete label_indices;		// change ???
+	delete label_indices;		// change this ???
 }
 
 void gen_bin_eql_exp(Expression* expr) {
@@ -332,7 +331,6 @@ void gen_ternary(Expression* expr) {
 }
 
 void gen_call(Expression* expr) {
-	// 555
 	// check presence of function definition, equality of function parameters and arguments
 	bool presence = false;
 	size_t i = 0;
@@ -474,12 +472,9 @@ void gen_exp(Expression* expr) {
 		gen_call(expr);
 		break;
 	}
-	//default: fatal("Nothing to generate in return expression in function [%s]", prog->func_decl->name);
 	default: fatal("Nothing to generate in return expression in function");
 	}
 }
-
-// TO DO: own queue for indeices for each gen ???
 
 void gen_stmt_queue(StatementQueue* stmt_queue);
 void gen_stmt(Statement* stmt) {
@@ -563,7 +558,7 @@ void gen_stmt(Statement* stmt) {
 		stack_index = old_stack_index;
 		var_map = old_var_map;
 	}
-	else if (stmt->kind == STMT_FOR) {		// ???
+	else if (stmt->kind == STMT_FOR) {	
 		gen_exp(stmt->expr);
 		buf = buf_printf(buf, "_label%d:\n", label_index);
 		label_indices->push(label_index);
@@ -607,21 +602,6 @@ void gen_code() {
 \nstart:\n");
 
 	buf = buf_printf(buf, "\n\tinvoke main\n");
-	//buf = buf_printf(buf, "\tinvoke  NumbToStr, ebx, ADDR buff\n\
-\tinvoke  StdOut, eax\n");
-
-	/*for (size_t i = 0; i < prog->func_queue->size(); i++) {
-		//buf = buf_printf(buf, "%s\tPROTO\n", prog->func_queue[i]);
-		buf = buf_printf(buf, "\n\tinvoke %s\n", prog->func_queue->front()->name);
-		//prog->func_queue->push(prog->func_queue->front());
-		//prog->func_queue->pop();
-		prog->func_queue->push_back(prog->func_queue->front());
-		prog->func_queue->erase(prog->func_queue->begin());
-
-		buf = buf_printf(buf, "\tinvoke  NumbToStr, ebx, ADDR buff\n\
-\tinvoke  StdOut, eax\n");
-	}*/
-
 	buf = buf_printf(buf, "\tinvoke  ExitProcess, 0\n\n");
 }
 
@@ -685,20 +665,16 @@ void gen_func_decl(FuncDecl* func_decl) {
 	if(func_decl->stmt_queue->size() == 0) fatal("No statement to generate in function [%s]", func_decl->name);
 	buf = buf_printf(buf, "\tpush ebp\n\tmov ebp, esp\n");			// function prologue
 
-	
-
 	gen_stmt_queue(func_decl->stmt_queue);
 
 	buf = buf_printf(buf, "\n%s ENDP\n\n", func_decl->name);
-	
 }
 
 void gen_func_queue(FuncQueue* func_queue) {
 	while (!func_queue->empty()) {
 		var_map.resize(0);		// clean up variable map
 		gen_func_decl(func_queue->front());
-		//func_queue->pop();
-		prog->defined_func->push_back(func_queue->front());		// 555
+		prog->defined_func->push_back(func_queue->front());		
 		func_queue->erase(func_queue->begin());
 	}
 }
@@ -718,17 +694,12 @@ includelib  c:\\masm32\\lib\\masm32.lib\n\n");
 void gen_prog() {
 	gen_includes();		
 	
-	//if (prog->func_decl == nullptr) fatal("No function declaration to generate");
 	if (prog->func_queue->empty()) fatal("No functions to generate");
-
 
 	buf = buf_printf(buf, "NumbToStr\tPROTO :DWORD,:DWORD\n");
 	for (size_t i = 0; i < prog->func_queue->size(); i++) {
-		//buf = buf_printf(buf, "%s\tPROTO\n", prog->func_queue[i]);
 		buf = buf_printf(buf, "%s\tPROTO\n", prog->func_queue->front()->name);
-		//prog->func_queue->push(prog->func_queue->front());
 		prog->func_queue->push_back(prog->func_queue->front());
-		//prog->func_queue->pop();
 		prog->func_queue->erase(prog->func_queue->begin());
 	}
 	buf = buf_printf(buf, "\n");

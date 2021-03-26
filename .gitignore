@@ -1,0 +1,8 @@
+#Directories
+.vs/
+Debug/
+
+#Files
+*.sln
+*.filters
+*.user

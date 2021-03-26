@@ -1,5 +1,3 @@
-// TOD DO: elif
-
 #pragma once
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
@@ -108,7 +106,7 @@ void clear_buf() {
 
 bool gen_bat_file(const char* path) {
 	clear_buf();
-	buf_cap = 2048;		// TO DO: #define 2048	???
+	buf_cap = 2048;		// TO DO: #define 2048
 	buf = (char*)xmalloc(buf_cap, "Can't allocate space for char buffer");
 	buf = buf_printf(buf, \
 "c:\\masm32\\bin\\ml /c /Zd /coff source.asm\n\

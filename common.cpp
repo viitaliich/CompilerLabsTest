@@ -30,7 +30,7 @@ void* xrealloc(void* ptr, size_t num_bytes) {
 	return ptr;
 }
 
-typedef std::vector<char*> Blocks;		// pull blocks
+typedef std::vector<char*> Blocks;		// pull of blocks
 
 typedef struct Pull {
 	char* ptr;		// start of free mem

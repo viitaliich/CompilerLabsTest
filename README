@@ -1,0 +1,57 @@
+Peculiar properties of this compiler
+	- Based on https://norasandler.com/2017/11/29/Write-a-Compiler.html
+	- This is a compiler for Python, not interpreter. This leads to some special properties and features.
+	- No global variables for now
+	- 'main' function is an entry point for now, like in C language
+	- Function names which are identical to assembly language keywords and commands are illegal for now.
+	- Scope mechanism is similar to C language one. This is because of Python interpreter properties.
+	- No empty lines between statements are allowed for now.
+	- range() is a keyword, not a function. No functions from any libraries are allowed.
+	- No 'break', 'continue', 'elif'.
+	- No backward iterations in 'for' loops.
+	- 'return' is actually 'print()', not return in an usual sense.
+	- There could be syntax bugs.
+	- There are errors here, described in FIX part below.
+	- 'if(-1)' equals 1 (true)
+
+TO DO
+	- Global variables
+	- '_' before function names
+	- Backward iterations in for loops
+	- 'break', 'continue'
+	- 'elif'
+	- Python scope methodology instead C scope
+	- 'pass' keyword
+	- New extension checking mechanism
+	- Manual path input
+	- Update to error detection machanism
+	- Change all "is_kind(...)" on "token.kind == ..."
+
+FIX
+	Return is equivalent to print()
+	Undefined ERROR:
+		def bar(b):
+		    if b <= 0:
+		        return b
+		    return b + bar(b / 2)
+		def foo(a):
+		    if a <= 0:
+		        return a
+		    return a + bar(a - 1)
+		def main():
+		    return foo(5)
+
+	Scope ERROR or comparison ERROR:
+		def main():
+			a = 0
+			// this is like a = 3 -> result is 3, must be 4
+			for a in range(3):		
+				a = a*2
+			return a
+		Solution - add '_' in asm before 'a' as index (defferentiate the same names in different scopes) OR change comparasion in 'range(3)'
+
+	Bugs with DIVISION ON ZERO error (this is error: '6/3/2')
+
+	Bug: returns 5
+		def main():
+			return 5 6

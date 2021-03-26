@@ -15,10 +15,9 @@ typedef enum {
 	BLOCK_RIGHT,
 	BLOCK_CENTRAL,
 	BLOCK_LEFT,
-	BLOCK_TERMINATE,	// ??? do we need this?
 } SpacesBlock;
 
-SpacesBlock spaces_block;	// ??? do we need this?
+//SpacesBlock spaces_block;	// ??? do we need this?	DELETE
 
 Program* prog = nullptr;
 
@@ -91,20 +90,6 @@ Expression* parse_factor() {
 		while_spaces();
 
 		if (token.kind == TOKEN_LPAREN) {
-			//// check presence of function definition, equality of function parameters and arguments
-			//bool presence = false;
-			//size_t i = 0;
-			//while (!presence && i < prog->func_queue->size()) {
-			//	if (expr->var == prog->func_queue->at(i)->name) {
-			//		presence = true;
-			//		if (expr->args->size() != prog->func_queue->at(i)->parameters->size()) {
-			//			fatal("NUMBER OF FUNCTION PARAMETERS AND FUNCTION ARGUMENTS IS NOT EQUAL");
-			//		}
-			//	}
-			//	i++;
-			//}
-			//if (!presence) fatal("FUNCTION [%s] NOT DEFINED", expr->var);
-
 			expr->kind = EXP_CALL;
 			consume_token();
 			while_spaces();
@@ -395,7 +380,7 @@ void set_block() {
 
 void change_block() {
 	// BUG: new line is empty, block changes anyway
-	// could be errors ???
+	// could be errors here
 
 	if (token.kind == TOKEN_NEW_LINE) {
 		consume_token();
@@ -431,7 +416,7 @@ Statement* parse_stmt() {
 
 		if (!block_stack.empty() && block.index > block_stack.top().index) {
 			block_stack.push(block);
-			blk = block;		// save current block for future changes back
+			blk = block;		// save current block for future changes backward
 
 			Statement* statement = parse_stmt();
 			stmt->stmt_queue->push(statement);
@@ -460,7 +445,7 @@ Statement* parse_stmt() {
 			if (!block_stack.empty() && block.index > block_stack.top().index) {
 				block_stack.push(block);
 
-				blk = block;	// save current block for future changes back
+				blk = block;	// save current block for future changes backward
 
 				Statement* statement = parse_stmt();
 				stmt->stmt_queue_two->push(statement);
@@ -487,7 +472,6 @@ Statement* parse_stmt() {
 		stmt->expr->exp_right = expression();
 		stmt->expr->exp_right->kind = EXP_INT;
 		stmt->expr->exp_right->int_val = 0;
-		//if (stmt->expr->kind != EXP_VAR) fatal("ERR");
 		while_spaces();
 		expected_keyword(KEYWORD_IN);
 		while_spaces();
@@ -501,28 +485,22 @@ Statement* parse_stmt() {
 		stmt->expr_two->exp_left = stmt->expr->exp_left;
 		stmt->expr_two->exp_right = parse_expr();
 		
-		//stmt->expr_two = parse_expr();
-		// TO DO ???
 		if (token.kind == TOKEN_COMA) {
 			stmt->expr->exp_right = stmt->expr_two->exp_right;
-			//stmt->expr_one = stmt->expr_two;		// we don't need expr_one at all
 			consume_token();
 			while_spaces();
 			stmt->expr_two = expression();
 			stmt->expr_two->kind = EXP_BIN_LESS;
 			stmt->expr_two->exp_left = stmt->expr->exp_left;
 			stmt->expr_two->exp_right = parse_expr();
-			
 
 			while_spaces();
 			if (token.kind == TOKEN_COMA) {
 				consume_token();
 				while_spaces();
 				stmt->expr_three = expression();
-				//stmt->expr_three->kind = EXP_BIN_ADD;
 				stmt->expr_three->kind = EXP_ASSIGN;
 				stmt->expr_three->exp_left = expression();
-				//stmt->expr_three->exp_left = stmt->expr->exp_left;
 				stmt->expr_three->exp_left = stmt->expr->exp_left;
 				stmt->expr_three->exp_right = expression();
 				stmt->expr_three->exp_right->kind = EXP_BIN_ADD;
@@ -532,10 +510,8 @@ Statement* parse_stmt() {
 			}
 			else {
 				stmt->expr_three = expression();
-				//stmt->expr_three->kind = EXP_BIN_ADD;
 				stmt->expr_three->kind = EXP_ASSIGN;
 				stmt->expr_three->exp_left = expression();
-				//stmt->expr_three->exp_left = stmt->expr->exp_left;
 				stmt->expr_three->exp_left = stmt->expr->exp_left;
 				stmt->expr_three->exp_right = expression();
 				stmt->expr_three->exp_right->kind = EXP_BIN_ADD;
@@ -544,16 +520,12 @@ Statement* parse_stmt() {
 				stmt->expr_three->exp_right->exp_right = expression();
 				stmt->expr_three->exp_right->exp_right->kind = EXP_INT;
 				stmt->expr_three->exp_right->exp_right->int_val = 1;
-				//stmt->expr_three->exp_right->kind = EXP_INT;
-				//stmt->expr_three->exp_right->int_val = 1;
 			}
 		}
 		else {
 			stmt->expr_three = expression();
-			//stmt->expr_three->kind = EXP_BIN_ADD;
 			stmt->expr_three->kind = EXP_ASSIGN;
 			stmt->expr_three->exp_left = expression();
-			//stmt->expr_three->exp_left = stmt->expr->exp_left;
 			stmt->expr_three->exp_left = stmt->expr->exp_left;
 			stmt->expr_three->exp_right = expression();
 			stmt->expr_three->exp_right->kind = EXP_BIN_ADD;
@@ -562,8 +534,6 @@ Statement* parse_stmt() {
 			stmt->expr_three->exp_right->exp_right = expression();
 			stmt->expr_three->exp_right->exp_right->kind = EXP_INT;
 			stmt->expr_three->exp_right->exp_right->int_val = 1;
-			//stmt->expr_three->exp_right->kind = EXP_INT;
-			//stmt->expr_three->exp_right->int_val = 1;
 		}
 		while_spaces();
 		expected_token(TOKEN_RPAREN);
@@ -576,7 +546,7 @@ Statement* parse_stmt() {
 
 		if (!block_stack.empty() && block.index > block_stack.top().index) {
 			block_stack.push(block);
-			blk = block;		// save current block for future changes back
+			blk = block;		// save current block for future changes backward
 
 			Statement* statement = parse_stmt();
 			stmt->stmt_queue->push(statement);
@@ -605,7 +575,7 @@ Statement* parse_stmt() {
 
 		if (!block_stack.empty() && block.index > block_stack.top().index) {
 			block_stack.push(block);
-			blk = block;		// save current block for future changes back
+			blk = block;		// save current block for future changes backward
 
 			Statement* statement = parse_stmt();
 			stmt->stmt_queue->push(statement);
@@ -633,7 +603,7 @@ Statement* parse_stmt() {
 			if (!block_stack.empty() && block.index > block_stack.top().index) {
 				block_stack.push(block);
 
-				blk = block;	// save current block for future changes back
+				blk = block;	// save current block for future changes backward
 
 				Statement* statement = parse_stmt();
 				stmt->stmt_queue_two->push(statement);
@@ -700,7 +670,7 @@ FuncDecl* parse_func_decl() {
 
 	Block blk;
 
-	if (!block_stack.empty() && block.index > block_stack.top().index) {		// ??? Can be errors
+	if (!block_stack.empty() && block.index > block_stack.top().index) {		// Could be errors
 		block_stack.push(block);
 
 		blk = block;
@@ -733,20 +703,17 @@ Program* parse_prog() {
 	blk = block;
 
 	FuncDecl* func_decl = parse_func_decl();
-	//prog->func_queue->push(func_decl);
 	
-	// Check definition of this function	???
+	// Check definition of this function. Could be errors	???
 	if (!prog->func_queue->empty()) {
 		bool found = false;
 		size_t i = 0;
 		while(!found && i < prog->func_queue->size()){
-		//for (size_t i = 0; i < prog->func_queue->size(); i++) {
 			if (prog->func_queue->at(i)->name == func_decl->name) {
 				prog->func_queue->at(i) = func_decl;
 				found = true;
 			}
 			i++;
-			
 		}
 		if(!found) prog->func_queue->push_back(func_decl);
 	}
@@ -758,18 +725,19 @@ Program* parse_prog() {
 		bool found = false;
 		size_t i = 0;
 		while (!found && i < prog->func_queue->size()) {
-		//for (size_t i = 0; i < prog->func_queue->size(); i++) {
 			if (prog->func_queue->at(i)->name == func_decl->name) {
 				prog->func_queue->at(i) = func_decl;
 				found = true;
 			}
-			else prog->func_queue->push_back(func_decl);
+			else {
+				//prog->func_queue->push_back(func_decl);		???
+				//found = true;		???
+			}
 			i++;
 		}
-		if (!found) prog->func_queue->push_back(func_decl);
+		//found = false;		???
 
-		//prog->func_queue->push(func_decl); ---
-		//prog->func_queue->push_back(func_decl); +++
+		if (!found) prog->func_queue->push_back(func_decl);
 	}
 	while_spaces();
 	if (!is_kind(TOKEN_EOF)) fatal("UNEXPECTED TOKEN INSTEAD EOF AT LINE [%d], POSITION [%d].", src_line, (size_t)((uintptr_t)stream - (uintptr_t)line_start + 1));

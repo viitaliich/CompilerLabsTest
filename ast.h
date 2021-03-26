@@ -60,8 +60,7 @@ typedef std::vector <Expression*> FuncArgs;
 
 
 typedef struct Statement {
-	Expression* expr;
-	//Expression* expr_one;		// range(a, ...
+	Expression* expr;			// range(a, ...	???
 	Expression* expr_two;		// ... b, ...
 	Expression* expr_three;		// ... c)
 	Statement* stmt;
